@@ -1014,6 +1014,8 @@ function pathPos(pts,t){
 //  6. Outlet ripple pool     — expanding rings on standing water
 function drawNai(n,ts){
   const sp=n.pts.map(([lo,la])=>P(lo,la));
+  // Skip if any projected point is non-finite (horizon/behind-camera edge case)
+  if(sp.some(p=>!isFinite(p[0])||!isFinite(p[1])))return;
   ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
   if(n.surge<=0){ctx.restore();return;}
   const{pts:dp,eI,tx,ty}=getProg(sp,n.surge);
@@ -1056,7 +1058,9 @@ function drawNai(n,ts){
     ctx.closePath();ctx.fillStyle=grad;ctx.fill();
   }
   function makeGrad(stops){
-    const g=ctx.createLinearGradient(dp[0][0],dp[0][1],dp[dp.length-1][0],dp[dp.length-1][1]);
+    const x0=dp[0][0],y0=dp[0][1],x1=dp[dp.length-1][0],y1=dp[dp.length-1][1];
+    if(!isFinite(x0)||!isFinite(y0)||!isFinite(x1)||!isFinite(y1))return 'rgba(0,120,200,0.3)';
+    const g=ctx.createLinearGradient(x0,y0,x1,y1);
     stops.forEach(([p,c])=>g.addColorStop(p,c));return g;
   }
 
@@ -1392,7 +1396,7 @@ function drawCanvas(ts){
   if(ph.id==='DRY'){document.getElementById('m-nai').textContent=0;document.getElementById('m-bund').textContent='MONITORING';document.getElementById('m-bund').style.color='#43a047';}
   updateMapLayers();
   drawBarrages(ts);
-  for(const n of NAIS)drawNai(n,ts);
+  for(const n of NAIS){try{drawNai(n,ts);}catch(e){/* skip Nai if projection throws (horizon edge case) */}}
   drawLakes(ts);drawLabels();
   const mp=Math.round(WB.manchar.fill*100),hp=Math.round(WB.hamal.fill*100),gp=Math.round(WB.gajdam.fill*100),dp=Math.round(WB.darawai.fill*100);
   [['m',mp],['h',hp],['g',gp],['d',dp]].forEach(([k,v])=>{const gl=document.getElementById('gl-'+k),gf=document.getElementById('gf-'+k);if(gl)gl.textContent=v+'%';if(gf)gf.style.width=v+'%';});
