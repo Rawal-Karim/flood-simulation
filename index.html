@@ -1192,7 +1192,6 @@ function drawNai(n,ts){
   }
 
   // ── SOURCE LABEL at mountain origin ─────────────────────────────────────
-  // Shows once the surge is visible — pinned to the first pts coordinate
   if(n.surge>0.12){
     const src=sp[0];
     const srcAlpha=Math.min(n.surge*3,1);
@@ -1200,26 +1199,60 @@ function drawNai(n,ts){
     const lbl=n.name;
     ctx.font='600 8px Segoe UI';
     const tw=ctx.measureText(lbl).width;
-    const px=src[0], py=src[1];
-    // Pill background — all Kirthar Nais, consistent blue style
-    ctx.fillStyle='rgba(18,42,80,0.82)';
-    roundRect(ctx,px-tw/2-5,py-13,tw+10,15,3);ctx.fill();
-    ctx.strokeStyle='rgba(100,185,245,0.55)';ctx.lineWidth=0.8;
-    roundRect(ctx,px-tw/2-5,py-13,tw+10,15,3);ctx.stroke();
-    // Range tag above the pill
-    ctx.font='500 6px Segoe UI';
-    const tagW=ctx.measureText('KTR').width;
-    ctx.fillStyle='rgba(15,35,65,0.78)';
-    roundRect(ctx,px-tagW/2-3,py-22,tagW+6,9,2);ctx.fill();
-    ctx.fillStyle='rgba(140,210,255,0.90)';
-    ctx.textAlign='center';ctx.fillText('KTR',px,py-15);
-    // Nai name
-    ctx.font='600 8px Segoe UI';
-    ctx.fillStyle=isKoh?'rgba(210,200,255,0.95)':'rgba(160,225,255,0.95)';
-    ctx.fillText(lbl,px,py-2);
-    // Tick line down to the Nai path start
-    ctx.beginPath();ctx.moveTo(px,py+3);ctx.lineTo(px,py+7);
-    ctx.strokeStyle=bdCol;ctx.lineWidth=1;ctx.stroke();
+    const px=src[0],py=src[1];
+
+    // ── Card background ───────────────────────────────────────────────────
+    const cardW=Math.max(tw+14,38),cardH=38,cardX=px-cardW/2,cardY=py-cardH-6;
+    ctx.fillStyle='rgba(8,20,48,0.88)';
+    roundRect(ctx,cardX,cardY,cardW,cardH,5);ctx.fill();
+    ctx.strokeStyle='rgba(100,185,245,0.45)';ctx.lineWidth=0.8;
+    roundRect(ctx,cardX,cardY,cardW,cardH,5);ctx.stroke();
+
+    // ── Mountain icon (Kirthar Range silhouette) ──────────────────────────
+    // Two peaks + ridge line, centred in the top half of the card
+    const mx=px,my=cardY+13,ms=9; // centre x, base y, scale
+    ctx.beginPath();
+    // Left peak
+    ctx.moveTo(mx-ms*1.6, my);
+    ctx.lineTo(mx-ms*0.7, my-ms*1.1);
+    ctx.lineTo(mx-ms*0.1, my-ms*0.45);
+    // Right peak (taller — main peak)
+    ctx.lineTo(mx+ms*0.5, my-ms*1.55);
+    ctx.lineTo(mx+ms*1.0, my-ms*0.9);
+    ctx.lineTo(mx+ms*1.6, my);
+    ctx.closePath();
+    // Fill: dark slate base
+    ctx.fillStyle='rgba(22,50,95,0.95)';ctx.fill();
+    // Snow cap on right (taller) peak
+    ctx.beginPath();
+    ctx.moveTo(mx+ms*0.5, my-ms*1.55);          // peak tip
+    ctx.lineTo(mx+ms*0.28, my-ms*1.18);
+    ctx.lineTo(mx+ms*0.72, my-ms*1.18);
+    ctx.closePath();
+    ctx.fillStyle='rgba(210,235,255,0.92)';ctx.fill();
+    // Outline
+    ctx.beginPath();
+    ctx.moveTo(mx-ms*1.6,my);
+    ctx.lineTo(mx-ms*0.7,my-ms*1.1);
+    ctx.lineTo(mx-ms*0.1,my-ms*0.45);
+    ctx.lineTo(mx+ms*0.5,my-ms*1.55);
+    ctx.lineTo(mx+ms*1.0,my-ms*0.9);
+    ctx.lineTo(mx+ms*1.6,my);
+    ctx.strokeStyle='rgba(130,195,255,0.70)';ctx.lineWidth=0.9;ctx.stroke();
+
+    // ── Nai name ──────────────────────────────────────────────────────────
+    ctx.font='600 7.5px Segoe UI';
+    ctx.fillStyle='rgba(165,228,255,0.95)';
+    ctx.textAlign='center';
+    ctx.shadowBlur=4;ctx.shadowColor='rgba(41,182,246,0.6)';
+    ctx.fillText(lbl,px,cardY+cardH-5);
+    ctx.shadowBlur=0;
+
+    // ── Tick line to path start ───────────────────────────────────────────
+    ctx.beginPath();ctx.moveTo(px,cardY+cardH);ctx.lineTo(px,py-1);
+    ctx.strokeStyle='rgba(100,185,245,0.40)';ctx.lineWidth=0.8;
+    ctx.setLineDash([2,3]);ctx.stroke();ctx.setLineDash([]);
+
     ctx.restore();
   }
 
