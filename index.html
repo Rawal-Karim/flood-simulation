@@ -102,10 +102,10 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
   border-radius:10px;backdrop-filter:blur(14px);padding:12px 14px;
   pointer-events:auto}
 #aud-player.open{display:block}
-#aud-seg-label{font-size:7px;color:#29b6f6;letter-spacing:2px;
-  text-transform:uppercase;margin-bottom:5px;font-weight:700}
-#aud-seg-text{font-size:8.5px;color:rgba(175,210,245,.82);line-height:1.7;
-  margin-bottom:10px;min-height:52px}
+#aud-seg-label{font-size:9px;color:#29b6f6;letter-spacing:0.5px;
+  margin-bottom:5px;font-weight:700;direction:rtl;text-align:right}
+#aud-seg-text{font-size:9px;color:rgba(175,210,245,.82);line-height:1.8;
+  margin-bottom:10px;min-height:52px;direction:rtl;text-align:right}
 #aud-progress{height:2px;background:rgba(255,255,255,.1);border-radius:2px;
   margin-bottom:10px;overflow:hidden}
 #aud-prog-fill{height:100%;background:linear-gradient(90deg,#29b6f6,#42a5f5);
@@ -318,12 +318,12 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 <body>
 <button id="aud-btn" aria-label="Audio guide" title="Audio guide">🎙</button>
 <div id="aud-player">
-  <div id="aud-seg-label">Audio Guide</div>
-  <div id="aud-seg-text"></div>
+  <div id="aud-seg-label" dir="auto">راہنما</div>
+  <div id="aud-seg-text" dir="auto"></div>
   <div id="aud-progress"><div id="aud-prog-fill"></div></div>
   <div id="aud-controls">
     <button id="aud-prev">◀</button>
-    <button id="aud-play">▶ Play</button>
+    <button id="aud-play">▶ چلائیں</button>
     <button id="aud-next">▶</button>
     <span id="aud-seg-count"></span>
   </div>
@@ -1559,36 +1559,36 @@ map.on('load',()=>{
 
   const SEGMENTS=[
     {
-      label:'Purpose',
-      text:'The Sindh Irrigation Department manages nine seasonal hill torrents — called Nais — that surge from the Kirthar Mountains across Sindh\'s right bank every monsoon, threatening lakes, a 234-kilometre earthen flood barrier, and four districts. This simulation exists to make that threat visible — not as numbers in a report, but as something you can watch unfold in real time on a real map.'
+      label:'مقصد',
+      text:'محکمہ آبپاشی سندھ نو موسمی پہاڑی نالوں کا انتظام کرتا ہے — جنہیں نائی کہا جاتا ہے — جو ہر مون سون میں کرتھر پہاڑوں سے سندھ کے دائیں کنارے پر امڈ آتے ہیں اور جھیلوں، دو سو چونتیس کلومیٹر طویل مٹی کے سیلابی بند، اور چار اضلاع کو خطرے میں ڈالتے ہیں۔ یہ سمیولیشن اس خطرے کو آنکھوں کے سامنے لانے کے لیے بنائی گئی ہے — رپورٹ کے اعداد و شمار کی صورت میں نہیں، بلکہ ایک حقیقی نقشے پر حقیقی وقت میں گھٹتے بڑھتے مناظر کی شکل میں۔'
     },
     {
-      label:'Data Sources',
-      text:'The data is grounded in official sources. The terrain is NASA satellite elevation data. The nine Nai paths are confirmed from the Sindh Irrigation Department\'s official Hill Torrent Watershed map. The two flood peaks you see on the chart — 543,184 cusecs on 24th August and 635,759 cusecs on 14th September 2025 — are real recorded measurements from last monsoon season. The Thatta Division canal network comes from the SID\'s 2025 survey.'
+      label:'ڈیٹا کے ذرائع',
+      text:'ڈیٹا سرکاری ذرائع پر مبنی ہے۔ خطہ زمین ناسا کے سیٹلائٹ بلندی کے اعداد و شمار سے لیا گیا ہے۔ نو نائیوں کے راستے محکمہ آبپاشی سندھ کے سرکاری ہل ٹورنٹ واٹرشیڈ نقشے سے تصدیق شدہ ہیں۔ چارٹ پر دکھائی دینے والی دو سیلابی چوٹیاں حقیقی ریکارڈ شدہ پیمائشیں ہیں: چوبیس اگست کو پانچ لاکھ تریتالیس ہزار کیوسک، اور چودہ ستمبر دو ہزار پچیس کو چھ لاکھ پینتیس ہزار کیوسک۔ ٹھٹہ ڈویژن کا نہری نیٹ ورک ایس آئی ڈی کے دو ہزار پچیس کے سروے سے لیا گیا ہے۔'
     },
     {
-      label:'The Map',
-      text:'You are looking at Sindh\'s Cluster 4 in 3D. The Kirthar Mountains rise to the west. The Indus River runs north to south on the right. Between them is the flat Kohistan plain — the land these nine hill torrents flood every monsoon. The flood cycle runs continuously: Dry, Rain, Surge, Peak, and Recess.'
+      label:'نقشہ',
+      text:'آپ سندھ کے کلسٹر چار کو تھری ڈی میں دیکھ رہے ہیں۔ مغرب میں کرتھر پہاڑ بلند ہیں۔ دریائے سندھ شمال سے جنوب کی طرف دائیں جانب بہتا ہے۔ ان کے درمیان چپٹا کوہستانی میدان ہے — وہ زمین جسے یہ نو پہاڑی نالے ہر مون سون میں غرق کرتے ہیں۔ سیلابی دور مسلسل چلتا رہتا ہے: خشکی، بارش، طغیانی، عروج، اور کمی۔'
     },
     {
-      label:'Left Panel — Metrics',
-      text:'The top-left panel is your command centre. It shows the current flood phase and progress. Below that, three live metrics: how many of the nine Nais are currently flowing, whether the Flood Protection Bund is holding or under pressure, and the Indus discharge at Kotri Barrage. The four fill bars beneath show Hamal Lake, Manchar Lake, Nai Gaj Dam, and Darawai Dam rising as floodwater pours in.'
+      label:'بائیں پینل',
+      text:'اوپر بائیں پینل آپ کا مرکزِ نظر ہے۔ یہ موجودہ سیلابی مرحلہ اور اس کی پیش رفت دکھاتا ہے۔ نیچے تین براہِ راست اعداد و شمار ہیں: نو میں سے کتنی نائیاں اس وقت بہہ رہی ہیں، سیلابی بند دباؤ میں ہے یا محفوظ ہے، اور کوٹری بیراج پر دریائے سندھ کا بہاؤ۔ نیچے چار بھرنے والی پٹیاں ہامل جھیل، منچھر جھیل، نائی گاج ڈیم، اور داراوائی ڈیم کو سیلابی پانی سے بھرتے ہوئے دکھاتی ہیں۔'
     },
     {
-      label:'Right Panel — Legend',
-      text:'The top-right panel identifies every element on the map. Blue dashed lines are the nine dry Nai riverbeds. The green line is the 234-kilometre Flood Protection Bund. Teal lines are the Thatta Division irrigation canals downstream. Yellow diamonds mark the three barrages — Guddu, Sukkur, and Kotri. As the flood front moves, the district tracker lights up — Larkana first, then Qambar Shahdadkot, Dadu, and Jamshoro.'
+      label:'دائیں پینل',
+      text:'اوپر دائیں پینل نقشے پر موجود ہر عنصر کی شناخت کرتا ہے۔ نیلی ٹوٹی لکیریں نو خشک نائیوں کے دریائی راستے ہیں۔ سبز لکیر دو سو چونتیس کلومیٹر طویل سیلابی بند ہے۔ سیروی لکیریں ٹھٹہ ڈویژن کی آبپاشی نہریں ہیں۔ پیلے ہیرے تین بیراجوں کو ظاہر کرتے ہیں — گدو، سکھر، اور کوٹری۔ سیلابی محاذ آگے بڑھنے کے ساتھ ضلعی ٹریکر روشن ہوتا ہے — پہلے لاڑکانہ، پھر قمبر شہداد کوٹ، دادو، اور جامشورو۔'
     },
     {
-      label:'The Chart',
-      text:'The chart at the bottom tracks Indus River discharge across the monsoon season, measured in cusecs — cubic feet of water per second. The colour bands mark official flood stages from Normal through to Super Flood. The two labelled spikes are real: 543,184 cusecs on 24th August and 635,759 cusecs on 14th September 2025. At that volume, the Indus cannot accept overflow from Manchar Lake. The water has nowhere to go.'
+      label:'چارٹ',
+      text:'نیچے چارٹ مون سون کے موسم میں دریائے سندھ کا بہاؤ کیوسک میں ٹریک کرتا ہے — کیوسک یعنی فی سیکنڈ کیوبک فٹ پانی۔ رنگین پٹیاں سرکاری سیلابی مراحل کو عام سے سپر فلڈ تک ظاہر کرتی ہیں۔ دو نشان زد چوٹیاں حقیقی ہیں: چوبیس اگست اور چودہ ستمبر دو ہزار پچیس۔ اس حجم پر دریائے سندھ منچھر جھیل کا اضافی پانی قبول کرنے سے قاصر ہو جاتا ہے۔ پانی کے پاس جانے کی کوئی جگہ نہیں رہتی۔'
     },
     {
-      label:'Watching the Surge',
-      text:'As the surge phase begins, watch the Nais activate from north to south — Nai Naig, then Bhan, Pakho, Dugdu, Khedro, then the largest, Nai Gaj, followed by Ranjo, Chandio, and finally Nai Baran near Jamshoro. Notice how the water does not stay in a channel. It spreads wide across the terrain in every direction. This is surface runoff — this is how it actually moves across flat land.'
+      label:'طغیانی کا منظر',
+      text:'جیسے ہی طغیانی کا مرحلہ شروع ہوتا ہے، نائیوں کو شمال سے جنوب کی طرف ایک ایک کر کے سرگرم ہوتے دیکھیں — نائی نائیگ، پھر بھان، پاکھو، ڈگڈو، کھیدرو، پھر سب سے بڑی نائی گاج، اس کے بعد رانجو، چاندیو، اور آخر میں جامشورو کے قریب نائی بارن۔ دیکھیں کہ پانی کسی نہر میں نہیں رہتا — یہ ہر سمت زمین پر پھیلتا چلا جاتا ہے۔ یہی سطحی بہاؤ ہے — اور یہی طریقہ ہے جس سے پانی ہموار زمین پر درحقیقت چلتا ہے۔'
     },
     {
-      label:'The Stakes',
-      text:'Watch the Flood Protection Bund glow orange as pressure builds. Watch the lakes fill. Watch the Indus darken through the flood stages. In 2022, August rainfall was 726 percent above average. In 2025, the Indus peaked twice within three weeks. The bund, the barrages, the lakes — they slow the flood. They do not stop it. That is the challenge the Sindh Irrigation Department manages every single year.'
+      label:'اہمیت',
+      text:'سیلابی بند کو دباؤ بڑھنے کے ساتھ نارنجی رنگ میں چمکتے دیکھیں۔ جھیلوں کو بھرتے دیکھیں۔ دریائے سندھ کو سیلابی مراحل سے گزرتے دیکھیں۔ دو ہزار بائیس میں اگست کی بارش اوسط سے سات سو چھبیس فیصد زیادہ تھی۔ دو ہزار پچیس میں دریائے سندھ تین ہفتوں کے اندر دو بار عروج پر پہنچا۔ بند، بیراج، جھیلیں — یہ سیلاب کو سست کرتے ہیں، روکتے نہیں۔ یہی وہ چیلنج ہے جسے محکمہ آبپاشی سندھ ہر سال سنبھالتا ہے۔'
     }
   ];
 
@@ -1612,7 +1612,7 @@ map.on('load',()=>{
     prevBtn.disabled=cur===0;
     nextBtn.disabled=cur===SEGMENTS.length-1;
     progFil.style.width='0%';
-    playBtn.textContent=playing?'⏸ Pause':'▶ Play';
+    playBtn.textContent=playing?'⏸ روکیں':'▶ چلائیں';
     btn.classList.toggle('playing',playing);
   }
 
@@ -1635,12 +1635,13 @@ map.on('load',()=>{
     synth.cancel();
     clearInterval(progTimer);
     const utt=new SpeechSynthesisUtterance(SEGMENTS[cur].text);
-    utt.rate=0.92;utt.pitch=1.0;utt.volume=1.0;
+    utt.lang='ur-PK';
+    utt.rate=0.85;utt.pitch=1.0;utt.volume=1.0;
 
-    // Prefer a natural English voice if available
+    // Prefer an Urdu voice; fall back to any available voice
     const voices=synth.getVoices();
-    const preferred=voices.find(v=>/en[-_](GB|AU|US)/i.test(v.lang)&&!/junior|child/i.test(v.name))
-      ||voices.find(v=>/en/i.test(v.lang));
+    const preferred=voices.find(v=>/ur[-_]PK/i.test(v.lang))
+      ||voices.find(v=>/ur/i.test(v.lang));
     if(preferred)utt.voice=preferred;
 
     utt.onstart=function(){
