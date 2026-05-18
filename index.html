@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>NAI Watershed 3D Flood Simulation — Sindh</title>
 <link href="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.js"></script>
@@ -79,6 +83,107 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 .maplibregl-ctrl-attrib{font-size:7px!important;opacity:.45}
 .maplibregl-ctrl-bottom-right{bottom:144px!important}
 .maplibregl-ctrl-bottom-left{bottom:144px!important}
+
+/* ── Mobile panel toggle buttons ─────────────────────────────────────────── */
+#mob-left-btn,#mob-right-btn{display:none;position:absolute;z-index:25;
+  background:rgba(8,22,50,.92);border:1px solid rgba(41,182,246,.3);
+  border-radius:8px;color:#29b6f6;font-size:16px;width:38px;height:38px;
+  cursor:pointer;backdrop-filter:blur(8px);align-items:center;justify-content:center;
+  transition:all .25s;-webkit-tap-highlight-color:transparent}
+#mob-left-btn{top:14px;left:14px}
+#mob-right-btn{top:14px;right:14px}
+#mob-left-btn:active,#mob-right-btn:active{background:rgba(41,182,246,.25)}
+
+/* ── Tablet (≤900px) ─────────────────────────────────────────────────────── */
+@media(max-width:900px){
+  #left-panel{width:230px}
+  #right-panel{width:165px}
+  #bottom-panel{height:110px}
+  #stage-strip{width:155px}
+  #dis-big{font-size:17px}
+}
+
+/* ── Mobile (≤640px) — full responsive overhaul ─────────────────────────── */
+@media(max-width:640px){
+  /* Toggle buttons visible */
+  #mob-left-btn,#mob-right-btn{display:flex}
+
+  /* Left panel: hidden off-screen by default, slides in when .open */
+  #left-panel{
+    top:0;left:0;width:82vw;max-width:300px;
+    height:100vh;overflow-y:auto;
+    padding:60px 0 20px;margin:0;
+    background:rgba(4,12,32,.97);
+    transform:translateX(-105%);
+    transition:transform .28s ease;
+    pointer-events:all;
+    border-right:1px solid rgba(41,182,246,.18);
+  }
+  #left-panel.open{transform:translateX(0)}
+
+  /* Right panel: off-screen right by default */
+  #right-panel{
+    top:0;right:0;width:82vw;max-width:280px;
+    height:100vh;overflow-y:auto;
+    padding:60px 0 20px;margin:0;
+    background:rgba(4,12,32,.97);
+    transform:translateX(105%);
+    transition:transform .28s ease;
+    pointer-events:all;
+    border-left:1px solid rgba(41,182,246,.18);
+  }
+  #right-panel.open{transform:translateX(0)}
+
+  /* Panels add inner padding on mobile */
+  #left-panel .pb{margin:0 12px 8px;border-radius:6px}
+  #right-panel .rp{margin:0 12px 8px;border-radius:6px}
+
+  /* Overlay behind open panels */
+  #panel-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:24;cursor:pointer}
+  #panel-overlay.show{display:block}
+
+  /* Bottom panel: compact strip */
+  #bottom-panel{
+    height:72px;flex-direction:row;
+  }
+  #chart-wrap{padding:6px 12px}
+  #ch-title{font-size:6px;letter-spacing:1px}
+  #dis-big{font-size:15px}
+  #dis-unit{font-size:6px}
+  #dis-stage{font-size:6px;padding:1px 5px}
+  #ch-hdr{margin-bottom:2px}
+  /* Hide stage strip on mobile — too narrow */
+  #stage-strip{display:none}
+
+  /* MapLibre controls above bottom panel */
+  .maplibregl-ctrl-bottom-right{bottom:76px!important;right:8px!important}
+  .maplibregl-ctrl-bottom-left{bottom:76px!important;left:8px!important}
+
+  /* Alert: full-width on mobile */
+  #alert{
+    left:50%;transform:translateX(-50%);
+    width:calc(100vw - 28px);text-align:center;
+    font-size:9px;padding:6px 10px;
+    white-space:normal;line-height:1.4;top:60px;
+  }
+
+  /* Intro screen: mobile-sized text */
+  #intro h1{font-size:14px;letter-spacing:2px;padding:0 20px}
+  #intro p{font-size:8px;letter-spacing:1.5px;padding:0 12px;text-align:center}
+  #intro .tech{font-size:7px;letter-spacing:1px;text-align:center;padding:0 16px}
+  .iload{width:160px}
+
+  /* Fonts slightly larger for readability on small screens */
+  .pb-h1{font-size:11px}
+  .pb-h2{font-size:8px}
+  .pb-body{font-size:7.5px}
+  .pb-lbl{font-size:6.5px}
+  .rp h3{font-size:6.5px}
+  .dn{font-size:8.5px}
+  .dst{font-size:6px}
+  .li-tx{font-size:8px}
+  .li-tx small{font-size:6.5px}
+}
 /* ── River hover tooltip ─────────────────────────────────── */
 #river-tip{position:absolute;display:none;z-index:40;pointer-events:none;
   background:rgba(5,15,44,.94);border:1px solid rgba(41,182,246,.35);
@@ -122,6 +227,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 </style>
 </head>
 <body>
+<button id="mob-left-btn" aria-label="Open control panel">☰</button>
+<button id="mob-right-btn" aria-label="Open data panel">⋮</button>
+<div id="panel-overlay"></div>
 <div id="map"></div>
 <canvas id="sim-canvas"></canvas>
 <div id="river-tip">
@@ -1267,6 +1375,37 @@ map.on('load',()=>{
     cards.forEach(c=>c.classList.toggle('card-collapsed',anyOpen));
     updateCollapseBtn();
   };
+})();
+
+/* ── Mobile panel toggles ── */
+(function(){
+  const mobL=document.getElementById('mob-left-btn');
+  const mobR=document.getElementById('mob-right-btn');
+  const overlay=document.getElementById('panel-overlay');
+  const lp=document.getElementById('left-panel');
+  const rp=document.getElementById('right-panel');
+  if(!mobL||!mobR||!overlay||!lp||!rp)return;
+  function closeAll(){
+    lp.classList.remove('open');
+    rp.classList.remove('open');
+    overlay.classList.remove('show');
+  }
+  mobL.addEventListener('click',function(e){
+    e.stopPropagation();
+    const opening=!lp.classList.contains('open');
+    closeAll();
+    if(opening){lp.classList.add('open');overlay.classList.add('show');}
+  });
+  mobR.addEventListener('click',function(e){
+    e.stopPropagation();
+    const opening=!rp.classList.contains('open');
+    closeAll();
+    if(opening){rp.classList.add('open');overlay.classList.add('show');}
+  });
+  overlay.addEventListener('click',closeAll);
+  /* Close panels on map interaction */
+  const mapEl=document.getElementById('map');
+  if(mapEl)mapEl.addEventListener('pointerdown',closeAll);
 })();
 </script>
 </body>
