@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NAI Watershed 3D Flood Simulation — Sindh</title>
+<link href="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://unpkg.com/maplibre-gl@4.5.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;background:#050f23}
+#map{position:absolute;inset:0}
+#sim-canvas{position:absolute;inset:0;pointer-events:none;z-index:10}
+#left-panel{position:absolute;top:18px;left:18px;width:270px;z-index:20;pointer-events:none}
+.pb{background:rgba(8,22,50,.90);padding:12px 15px;margin-bottom:8px;backdrop-filter:blur(8px)}
+.pb.bl{border-left:4px solid #29b6f6}.pb.ba{border-left:4px solid #ffc107}.pb.bg{border-left:4px solid #43a047}
+.pb-lbl{font-size:7px;color:rgba(100,175,220,.6);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:3px}
+.pb-h1{font-size:12px;font-weight:900;color:#fff;letter-spacing:1.5px;text-transform:uppercase;line-height:1.3}
+.pb-h2{font-size:8.5px;color:#29b6f6;letter-spacing:2px;font-weight:700;margin-top:3px}
+.pb-body{font-size:8px;color:rgba(155,200,235,.68);line-height:1.65;margin-top:6px}
+.pb-body b{color:rgba(200,225,250,.85)}
+#ph-track{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:8px;overflow:hidden}
+#ph-fill{height:100%;background:linear-gradient(90deg,#ffc107,#ff9800);border-radius:2px;width:0%;transition:width .3s}
+.mr{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.mr-k{font-size:7.5px;color:rgba(130,175,215,.7);letter-spacing:1px;text-transform:uppercase}
+.mr-v{font-size:15px;font-weight:800;color:#fff;line-height:1}
+.mr-u{font-size:7px;color:rgba(130,175,215,.6);margin-left:2px}
+.gauge-g{margin-top:5px}
+.gauge-r{margin-bottom:5px}
+.gauge-lbl{display:flex;justify-content:space-between;font-size:7px;color:rgba(140,185,225,.62);margin-bottom:2px}
+.gauge-t{height:4px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.gauge-f{height:100%;border-radius:3px;transition:width .5s ease}
+.blt{margin-top:6px}
+.blt-i{display:flex;align-items:flex-start;margin-bottom:4px;font-size:7.5px;color:rgba(150,195,230,.7)}
+.blt-i::before{content:'▸';color:#29b6f6;margin-right:5px;flex-shrink:0}
+#right-panel{position:absolute;top:18px;right:18px;width:186px;z-index:20;pointer-events:none}
+.rp{background:rgba(8,22,50,.90);padding:11px 13px;margin-bottom:8px;backdrop-filter:blur(8px)}
+.rp h3{font-size:7px;color:#42a5f5;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:9px;font-weight:700;border-bottom:1px solid rgba(66,165,245,.18);padding-bottom:5px}
+.dr{display:flex;align-items:center;margin-bottom:6px}
+.ddot{width:7px;height:7px;border-radius:50%;margin-right:7px;flex-shrink:0;transition:all .5s}
+.dn{font-size:9px;color:rgba(195,220,248,.85)}
+.dst{font-size:6.5px;margin-left:auto;padding:1px 5px;border-radius:3px;font-weight:700;transition:all .5s}
+.lr{display:flex;align-items:center;margin-bottom:7px;transition:all .4s}
+.li-ic{margin-right:8px;flex-shrink:0;transition:all .4s}
+.li-tx{font-size:8.5px;color:rgba(185,215,245,.82)}
+.li-tx small{display:block;font-size:7px;color:rgba(120,165,205,.58);margin-top:1px}
+#bottom-panel{position:absolute;bottom:0;left:0;right:0;height:140px;background:rgba(6,16,40,.92);border-top:2px solid rgba(41,182,246,.22);z-index:20;display:flex}
+#chart-wrap{flex:1;min-width:0;padding:9px 16px;display:flex;flex-direction:column}
+#ch-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px}
+#ch-title{font-size:7px;color:rgba(41,182,246,.8);letter-spacing:2px;text-transform:uppercase}
+#dis-big{font-size:21px;font-weight:900;color:#fff;line-height:1}
+#dis-unit{font-size:7.5px;color:rgba(130,175,215,.6);margin-left:2px}
+#dis-stage{font-size:7.5px;padding:2px 7px;border-radius:4px;font-weight:700;margin-left:7px;transition:all .5s}
+#chartCanvas{flex:1}
+#stage-strip{width:188px;flex-shrink:0;padding:9px 16px 9px 0;display:flex;flex-direction:column;justify-content:center}
+#st-title{font-size:7px;color:rgba(41,182,246,.8);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.srow{display:flex;align-items:center;margin-bottom:4px;transition:all .4s}
+.sl{font-size:7px;width:62px;color:rgba(155,195,230,.65);white-space:nowrap}
+.sbw{flex:1;height:4px;border-radius:3px;overflow:hidden;margin:0 5px}
+.sbi{height:100%;border-radius:3px;width:100%}
+.sv{font-size:6.5px;color:rgba(120,165,205,.6);width:42px;text-align:right}
+.srow.act .sl{color:#fff;font-weight:800}
+.srow.act .sv{color:#fff}
+/* Alert — top bar, compact */
+#alert{position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  background:rgba(185,18,18,.92);border:1.5px solid #ef5350;border-radius:6px;
+  padding:5px 20px;font-size:11px;font-weight:800;color:#fff;letter-spacing:1.5px;
+  z-index:30;opacity:0;transition:opacity .6s;pointer-events:none;white-space:nowrap}
+#intro{position:absolute;inset:0;background:rgba(4,12,30,.94);z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 1.4s}
+#intro.fade{opacity:0;pointer-events:none}
+#intro h1{font-size:22px;font-weight:900;color:#fff;letter-spacing:5px;text-transform:uppercase;
+  text-shadow:0 0 40px rgba(41,182,246,.85);margin-bottom:10px;text-align:center}
+#intro p{font-size:10.5px;color:#90caf9;letter-spacing:3px;margin-bottom:4px}
+#intro .tech{font-size:8.5px;color:rgba(80,130,175,.6);letter-spacing:1.5px;margin-top:12px}
+.iload{width:220px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:16px;overflow:hidden}
+.iload-f{height:100%;background:linear-gradient(90deg,#29b6f6,#4fc3f7);border-radius:2px;animation:iL 3.5s ease-in-out forwards}
+@keyframes iL{from{width:0}to{width:100%}}
+.maplibregl-ctrl-attrib{font-size:7px!important;opacity:.45}
+.maplibregl-ctrl-bottom-right{bottom:144px!important}
+.maplibregl-ctrl-bottom-left{bottom:144px!important}
+/* ── River hover tooltip ─────────────────────────────────── */
+#river-tip{position:absolute;display:none;z-index:40;pointer-events:none;
+  background:rgba(5,15,44,.94);border:1px solid rgba(41,182,246,.35);
+  border-left:3px solid #29b6f6;padding:9px 13px;border-radius:4px;
+  backdrop-filter:blur(10px);min-width:175px;transform:translate(14px,-50%)}
+#river-tip .rt-lbl{font-size:7px;color:rgba(41,182,246,.7);letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:4px}
+#river-tip .rt-val{font-size:20px;font-weight:900;color:#fff;line-height:1}
+#river-tip .rt-unit{font-size:7px;color:rgba(130,175,215,.6);margin-left:3px}
+#river-tip .rt-badge{font-size:7px;font-weight:700;padding:1px 6px;border-radius:3px;
+  margin-top:5px;display:inline-block}
+#river-tip .rt-reach{font-size:7px;color:rgba(120,165,205,.55);margin-top:4px;letter-spacing:.5px}
+/* ── Barrage click popup ─────────────────────────────────── */
+.maplibregl-popup-content{background:rgba(5,15,44,.96)!important;
+  border:1px solid rgba(255,213,79,.45)!important;border-radius:6px!important;
+  padding:11px 14px!important;color:#fff!important;
+  font-family:'Segoe UI',Arial,sans-serif!important;min-width:185px}
+.maplibregl-popup-close-button{color:rgba(200,200,200,.55)!important;font-size:14px!important;right:6px!important;top:4px!important}
+.maplibregl-popup-tip{border-top-color:rgba(255,213,79,.4)!important}
+.bp-name{font-size:10px;font-weight:900;color:#ffd54f;letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:4px}
+.bp-info{font-size:7.5px;color:rgba(180,210,245,.68);margin-bottom:8px;line-height:1.5}
+.bp-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.bp-k{font-size:7px;color:rgba(120,165,205,.6);text-transform:uppercase;letter-spacing:1px}
+.bp-v{font-size:9px;font-weight:700;color:#fff}
+/* ── Collapse All button ─────────────────────────── */
+#collapse-all{position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:25;
+  background:rgba(8,22,50,.88);border:1px solid rgba(41,182,246,.28);border-radius:20px;
+  color:rgba(140,200,245,.80);font-size:9px;font-family:'Segoe UI',Arial,sans-serif;
+  letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;
+  padding:5px 14px;pointer-events:auto;backdrop-filter:blur(8px);
+  transition:background .2s,color .2s,border-color .2s;white-space:nowrap}
+#collapse-all:hover{background:rgba(15,40,90,.95);color:#fff;border-color:rgba(41,182,246,.55)}
+/* ── Collapsible cards ───────────────────────────── */
+.card-body{overflow:hidden;transition:max-height .32s cubic-bezier(.4,0,.2,1),opacity .28s;max-height:600px;opacity:1}
+.card-collapsed .card-body{max-height:0;opacity:0}
+.ctog{background:none;border:none;color:rgba(100,165,215,.65);font-size:11px;cursor:pointer;
+  padding:0 3px;pointer-events:auto;line-height:1;transition:transform .25s,color .2s;flex-shrink:0}
+.ctog:hover{color:#fff}
+.card-collapsed .ctog{transform:rotate(-90deg)}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<canvas id="sim-canvas"></canvas>
+<div id="river-tip">
+  <div class="rt-lbl">Indus River · Live</div>
+  <div><span class="rt-val" id="rt-val">—</span><span class="rt-unit">cusecs</span></div>
+  <div class="rt-badge" id="rt-badge" style="background:rgba(67,160,71,.25);color:#66bb6a">NORMAL</div>
+  <div class="rt-reach" id="rt-reach">—</div>
+</div>
+
+<div id="left-panel">
+  <div class="pb bl">
+    <div class="pb-lbl">Sindh Irrigation Dept · Cluster 4</div>
+    <div class="pb-h1">Hill Torrent (Nai) Watershed Simulation</div>
+    <div class="pb-h2">Right Bank of the Indus River</div>
+    <div class="pb-body">Ephemeral torrents from <b>Kirthar &amp; Koh-e-Sulaiman</b> ranges surge across Kohistan plain into natural depressions and the Indus basin during monsoon.</div>
+  </div>
+  <div class="pb ba">
+    <div class="pb-lbl">Simulation Phase</div>
+    <div id="ph-name" style="font-size:13px;font-weight:900;color:#fff;letter-spacing:2px">INITIALIZING...</div>
+    <div id="ph-track"><div id="ph-fill"></div></div>
+  </div>
+  <div class="pb bg">
+    <div class="pb-lbl">Live Flood Metrics</div>
+    <div class="mr" style="margin-top:6px">
+      <div><div class="mr-k">Nais Active</div><div><span class="mr-v" id="m-nai">0</span><span class="mr-u">/ 12</span></div></div>
+      <div style="text-align:right"><div class="mr-k">FP Bund</div><div id="m-bund" style="font-size:8.5px;font-weight:700;color:#43a047;margin-top:2px">MONITORING</div></div>
+    </div>
+    <div class="gauge-g">
+      <div class="gauge-r"><div class="gauge-lbl"><span>Manchar Lake</span><span id="gl-m">0%</span></div><div class="gauge-t"><div class="gauge-f" id="gf-m" style="width:0%;background:linear-gradient(90deg,#1565c0,#42a5f5)"></div></div></div>
+      <div class="gauge-r"><div class="gauge-lbl"><span>Hamal Lake</span><span id="gl-h">0%</span></div><div class="gauge-t"><div class="gauge-f" id="gf-h" style="width:0%;background:linear-gradient(90deg,#0277bd,#29b6f6)"></div></div></div>
+      <div class="gauge-r"><div class="gauge-lbl"><span>Nai Gaj Dam</span><span id="gl-g">0%</span></div><div class="gauge-t"><div class="gauge-f" id="gf-g" style="width:0%;background:linear-gradient(90deg,#e65100,#ffc107)"></div></div></div>
+      <div class="gauge-r"><div class="gauge-lbl"><span>Darawai Dam</span><span id="gl-d">0%</span></div><div class="gauge-t"><div class="gauge-f" id="gf-d" style="width:0%;background:linear-gradient(90deg,#4a148c,#9c27b0)"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<button id="collapse-all" title="Toggle all panels">⊟ Collapse All</button>
+
+<div id="right-panel">
+  <div class="rp">
+    <h3>Primary Districts Affected</h3>
+    <div class="dr"><div class="ddot" id="dd-da" style="background:#43a047"></div><span class="dn">Dadu</span><span class="dst" id="ds-da" style="background:rgba(67,160,71,.2);color:#66bb6a">OK</span></div>
+    <div class="dr"><div class="ddot" id="dd-ja" style="background:#43a047"></div><span class="dn">Jamshoro</span><span class="dst" id="ds-ja" style="background:rgba(67,160,71,.2);color:#66bb6a">OK</span></div>
+    <div class="dr"><div class="ddot" id="dd-qa" style="background:#43a047"></div><span class="dn">Qambar Shahdadkot</span><span class="dst" id="ds-qa" style="background:rgba(67,160,71,.2);color:#66bb6a">OK</span></div>
+    <div class="dr"><div class="ddot" id="dd-la" style="background:#43a047"></div><span class="dn">Larkana</span><span class="dst" id="ds-la" style="background:rgba(67,160,71,.2);color:#66bb6a">OK</span></div>
+    <div class="dr"><div class="ddot" id="dd-ka" style="background:#43a047"></div><span class="dn">Karachi (W/Malir)</span><span class="dst" id="ds-ka" style="background:rgba(67,160,71,.2);color:#66bb6a">OK</span></div>
+  </div>
+  <div class="rp">
+    <h3>Legend</h3>
+    <div class="lr" id="leg-dry"><div class="li-ic"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="rgba(144,202,249,.5)" stroke-width="1.5" stroke-dasharray="5,4"/></svg></div><div class="li-tx">Hill Torrents (Nai)<small>Ephemeral streams — dry bed</small></div></div>
+    <div class="lr" id="leg-surge"><div class="li-ic"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#29b6f6" stroke-width="3" style="filter:drop-shadow(0 0 3px #29b6f6)"/></svg></div><div class="li-tx">Active Flood Surge<small>+ natural water spread</small></div></div>
+    <div class="lr" id="leg-lake"><div class="li-ic"><svg width="17" height="17"><ellipse cx="8.5" cy="8.5" rx="7.5" ry="6" fill="rgba(21,101,192,.7)" stroke="#42a5f5" stroke-width="1.5"/></svg></div><div class="li-tx">Lakes / Reservoirs<small>Manchar · Hamal · Dams</small></div></div>
+    <div class="lr" id="leg-fpb"><div class="li-ic"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="#43a047" stroke-width="2.5" style="filter:drop-shadow(0 0 2px #43a047)"/></svg></div><div class="li-tx">FP Bund (Right Bank)<small>234 km flood protection</small></div></div>
+    <div class="lr"><div class="li-ic"><svg width="26" height="12"><rect x="0" y="3" width="26" height="6" rx="3" fill="#1565c0"/></svg></div><div class="li-tx">Indus River<small>Guddu · Sukkur · Kotri</small></div></div>
+    <div class="lr" id="leg-bar"><div class="li-ic"><svg width="17" height="17"><polygon points="8.5,1 16,8.5 8.5,16 1,8.5" fill="rgba(255,213,79,.35)" stroke="#ffd54f" stroke-width="1.5"/></svg></div><div class="li-tx">Barrage / Dam Structure<small>Flow control structures</small></div></div>
+    <div class="lr"><div class="li-ic"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="rgba(0,210,165,.75)" stroke-width="2"/></svg></div><div class="li-tx">K.B. Feeder / Canals<small>Thatta Div · Kalri Baghar</small></div></div>
+  </div>
+</div>
+
+<div id="bottom-panel">
+  <div id="chart-wrap">
+    <div id="ch-hdr">
+      <div><div id="ch-title">Indus River Discharge (Cusecs)</div>
+        <div style="margin-top:1px"><span id="dis-big">95,000</span><span id="dis-unit">cusecs</span><span id="dis-stage" style="background:rgba(67,160,71,.25);color:#66bb6a">NORMAL</span></div>
+      </div>
+      <div style="text-align:right;font-size:7.5px;color:rgba(100,150,195,.5);line-height:1.8">
+        <div>Peak 1 · <span style="color:#ff9800">543,184</span> cfs · 24 Aug 2025</div>
+        <div>Peak 2 · <span style="color:#ef5350">635,759</span> cfs · 14 Sep 2025</div>
+      </div>
+    </div>
+    <canvas id="chartCanvas"></canvas>
+  </div>
+  <div id="stage-strip">
+    <div id="st-title">Flood Stage — Sindh Barrages</div>
+    <div class="srow" id="st-n"><span class="sl">Normal</span><div class="sbw"><div class="sbi" style="background:#43a047"></div></div><span class="sv">&lt;200k</span></div>
+    <div class="srow" id="st-l"><span class="sl">Low Flood</span><div class="sbw"><div class="sbi" style="background:#8bc34a"></div></div><span class="sv">200–350k</span></div>
+    <div class="srow" id="st-m"><span class="sl">Medium</span><div class="sbw"><div class="sbi" style="background:#ffc107"></div></div><span class="sv">350–500k</span></div>
+    <div class="srow" id="st-h"><span class="sl">High Flood</span><div class="sbw"><div class="sbi" style="background:#ff9800"></div></div><span class="sv">500–700k</span></div>
+    <div class="srow" id="st-v"><span class="sl">Very High</span><div class="sbw"><div class="sbi" style="background:#f44336"></div></div><span class="sv">700–900k</span></div>
+    <div class="srow" id="st-s"><span class="sl">Super Flood</span><div class="sbw"><div class="sbi" style="background:#7b1fa2"></div></div><span class="sv">&gt;900k</span></div>
+  </div>
+</div>
+
+<div id="alert">&#9888;&nbsp; FLASH FLOOD SURGE DETECTED — NAI SYSTEM ACTIVATED</div>
+
+<div id="intro">
+  <h1>NAI Watershed 3D Simulation</h1>
+  <p>Kirthar Mountains &rarr; Kohistan Plains &rarr; Indus River</p>
+  <p style="font-size:9.5px;color:rgba(80,130,175,.55);margin-top:3px">Right Bank · Sindh · Monsoon Flood Scenario · 2025 Peak Data</p>
+  <div class="tech">MapLibre GL JS · Google Satellite · AWS SRTM Terrain · Hillshade · 3D Terrain</div>
+  <div class="iload"><div class="iload-f"></div></div>
+</div>
+
+<script>
+// ─── GOOGLE MAPS API KEY ──────────────────────────────────────────────────
+const GKEY='AIzaSyD8Stuo-ZnCLtfC3xjluc1MXoc0ukw3Q9s';
+
+// ─── MAP STYLE (Google Satellite + AWS SRTM Terrain + Google Labels) ──────
+const STYLE={version:8,
+  glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+  sources:{
+    // Google Maps satellite — 4 tile servers for parallel loading, maxzoom 20
+    sat:{type:'raster',
+      tiles:[
+        `https://mt0.googleapis.com/vt?lyrs=s&x={x}&y={y}&z={z}&key=${GKEY}`,
+        `https://mt1.googleapis.com/vt?lyrs=s&x={x}&y={y}&z={z}&key=${GKEY}`,
+        `https://mt2.googleapis.com/vt?lyrs=s&x={x}&y={y}&z={z}&key=${GKEY}`,
+        `https://mt3.googleapis.com/vt?lyrs=s&x={x}&y={y}&z={z}&key=${GKEY}`
+      ],
+      tileSize:256,maxzoom:20,attribution:'© Google'},
+    // AWS Terrarium SRTM DEM — drives hillshade + 3-D terrain exaggeration
+    dem:{type:'raster-dem',
+      tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+      tileSize:256,maxzoom:14,encoding:'terrarium'},
+    // Google Roads + Labels overlay (transparent PNG over satellite)
+    lbl:{type:'raster',
+      tiles:[
+        `https://mt0.googleapis.com/vt?lyrs=h&x={x}&y={y}&z={z}&key=${GKEY}`,
+        `https://mt1.googleapis.com/vt?lyrs=h&x={x}&y={y}&z={z}&key=${GKEY}`,
+        `https://mt2.googleapis.com/vt?lyrs=h&x={x}&y={y}&z={z}&key=${GKEY}`,
+        `https://mt3.googleapis.com/vt?lyrs=h&x={x}&y={y}&z={z}&key=${GKEY}`
+      ],
+      tileSize:256,maxzoom:20}
+  },
+  layers:[
+    {id:'sat-l',type:'raster',source:'sat'},
+    // Hillshade over Google imagery — preserves mountain depth & shadows
+    {id:'hs-l',type:'hillshade',source:'dem',paint:{
+      'hillshade-exaggeration':0.52,
+      'hillshade-illumination-direction':315,
+      'hillshade-shadow-color':'#1a2744',
+      'hillshade-highlight-color':'#f5f0e8',
+      'hillshade-accent-color':'#6b5040'}},
+    // Google labels/roads on top at reduced opacity
+    {id:'lbl-l',type:'raster',source:'lbl',paint:{'raster-opacity':0.72}}
+  ]
+};
+const map=new maplibregl.Map({container:'map',style:STYLE,center:[68.0,26.2],zoom:6.5,pitch:20,bearing:-5,antialias:true,attributionControl:false});
+
+// ─── CANVAS ──────────────────────────────────────────────────────────────
+const cv=document.getElementById('sim-canvas'),ctx=cv.getContext('2d');
+function resCV(){cv.width=innerWidth;cv.height=innerHeight;}
+window.addEventListener('resize',resCV);map.on('resize',resCV);resCV();
+function P(lon,lat){const p=map.project([lon,lat]);return[p.x,p.y];}
+function mToPx(m,lat){const z=map.getZoom();return m/(156543.03*Math.cos(lat*Math.PI/180)/Math.pow(2,z));}
+
+// ─── GEO DATA ────────────────────────────────────────────────────────────
+// origin:'koh' = Koh-e-Sulaiman range (north, flows SSE into Kohistan plain)
+// origin:'kirthar' = Kirthar range (west, flows E across the right bank)
+// size:'major'|'medium'|'minor' drives dry-bed line width
+const NAIS=[
+  // ── KOH-E-SULAIMAN GROUP — originate north lat 27.8–28.5°N, flow SSE ────
+  {name:'Nai Nar',    origin:'koh',size:'medium',
+   pts:[[67.05,28.48],[67.18,28.30],[67.32,28.10],[67.45,27.90],[67.55,27.70],[67.63,27.52]],
+   to:'hamal',delay:-1.2,spd:.10},
+  {name:'Nai Muhar',  origin:'koh',size:'medium',
+   pts:[[66.98,28.20],[67.12,28.02],[67.26,27.85],[67.40,27.68],[67.55,27.58],[67.63,27.48]],
+   to:'hamal',delay:-0.6,spd:.10},
+  {name:'Nai Kadhan', origin:'koh',size:'medium',
+   pts:[[66.95,27.90],[67.10,27.78],[67.26,27.68],[67.42,27.60],[67.58,27.52],[67.63,27.47]],
+   to:'hamal',delay:-0.2,spd:.11},
+
+  // ── KIRTHAR RANGE GROUP — originate west lon ~66.82–66.92°E, flow E ─────
+  {name:'Nai Naig',   origin:'kirthar',size:'medium',
+   pts:[[66.92,27.65],[67.22,27.58],[67.45,27.52],[67.62,27.45]],
+   to:'hamal',delay:0,spd:.11},
+  {name:'Nai Bhan',   origin:'kirthar',size:'medium',
+   pts:[[66.92,27.18],[67.22,27.22],[67.48,27.32],[67.60,27.42]],
+   to:'hamal',delay:1.6,spd:.11},
+  {name:'Nai Pakho',  origin:'kirthar',size:'medium',
+   pts:[[66.92,26.88],[67.22,26.90],[67.48,26.95],[67.63,27.05]],
+   to:'hamal',delay:3.0,spd:.11},
+  {name:'Nai Dugdu',  origin:'kirthar',size:'medium',
+   pts:[[66.92,26.62],[67.20,26.66],[67.45,26.76],[67.63,26.88]],
+   to:'hamal',delay:4.2,spd:.11},
+  {name:'Nai Khedro', origin:'kirthar',size:'medium',
+   pts:[[66.92,26.38],[67.15,26.48],[67.28,26.65],[67.32,26.87]],
+   to:'gajdam',delay:5.2,spd:.11},
+  {name:'Nai Gaj',    origin:'kirthar',size:'major',
+   pts:[[66.82,26.90],[67.10,26.88],[67.32,26.87],[67.50,26.62],[67.62,26.38],[67.68,26.42]],
+   to:'manchar',delay:6.2,spd:.12,hasDam:true,damAt:[67.32,26.87]},
+  {name:'Nai Ranjo',  origin:'kirthar',size:'medium',
+   pts:[[66.92,25.88],[67.18,25.92],[67.42,26.06],[67.62,26.22],[67.68,26.38]],
+   to:'manchar',delay:7.4,spd:.11},
+  {name:'Nai Chandio',origin:'kirthar',size:'medium',
+   pts:[[66.92,25.62],[67.18,25.68],[67.40,25.82],[67.58,26.00],[67.65,26.22],[67.68,26.38]],
+   to:'manchar',delay:8.4,spd:.11},
+  {name:'Nai Baran',  origin:'kirthar',size:'major',
+   pts:[[66.92,25.35],[67.20,25.38],[67.48,25.38],[67.72,25.38],[67.92,25.41]],
+   to:'darawai',delay:9.4,spd:.10}
+];
+const WB={
+  // Verified coordinates from geographic sources
+  hamal:  {lon:67.63,lat:27.45,rxM:18000,ryM:11000,name:'HAMAL LAKE',   sub:'Shallow freshwater · Qambar-Shahdadkot',fill:0},
+  manchar:{lon:67.67,lat:26.42,rxM:24000,ryM:20000,name:'MANCHAR LAKE', sub:"Pakistan's Largest Freshwater Lake",fill:0},
+  gajdam: {lon:67.32,lat:26.87,rxM:7000, ryM:4500, name:'NAI GAJ DAM',  sub:'Kirthar gorge · 65 km NW of Dadu',fill:0},
+  darawai:{lon:67.95,lat:25.41,rxM:7000, ryM:4500, name:'DARAWAT DAM',  sub:'Nai Baran · Jhangri · Jamshoro Dist.',fill:0}
+};
+
+// ─── INDUS: natural meander path with real Sindh coordinates ─────────────
+// Guddu(28.43,69.72) → Sukkur(27.70,68.86) → Sehwan bend → Kotri(25.37,68.31) → Delta
+const INDUS=[
+  [69.72,28.43],[69.58,28.30],[69.44,28.17],[69.28,28.05],[69.12,27.94],
+  [68.96,27.83],[68.88,27.73],[68.86,27.70],/* Sukkur */
+  [68.78,27.58],[68.65,27.44],[68.50,27.28],[68.35,27.12],[68.22,26.95],
+  [68.10,26.78],[67.98,26.60],[67.92,26.44],[67.88,26.32],/* Sehwan bend west */
+  [67.86,26.18],[67.90,26.04],[68.00,25.90],[68.12,25.72],
+  [68.22,25.52],[68.30,25.40],[68.31,25.37],/* Kotri */
+  [68.34,25.22],[68.38,25.05],[68.35,24.85],[68.18,24.62],[67.92,24.38],[67.65,24.15]
+];
+
+// FP Bund — right bank, 234 km flood-protection bund parallel to Indus.
+// Coordinates corrected to stay consistently WEST of the Indus at every
+// latitude, including the critical Sehwan bend (26.15-26.42°N) where the
+// Indus swings west to 67.86-67.92°E. FP Bund held at 67.80-67.87°E there.
+const FP_BUND=[
+  [68.10,27.90],  // north end — Indus ~69.4°E (well east)
+  [68.08,27.55],  // Indus ~68.95°E
+  [68.02,27.25],  // Indus ~68.42°E
+  [67.95,26.95],  // Indus ~68.17°E
+  [67.87,26.65],  // Indus ~68.01°E → bund 0.14° west ✓
+  [67.82,26.42],  // Sehwan N — Indus ~67.91°E → bund 0.09° west ✓
+  [67.80,26.15],  // Sehwan bend — Indus ~67.87°E → bund 0.07° west ✓
+  [67.88,25.88],  // Indus back east ~68.01°E → bund 0.13° west ✓
+  [67.98,25.55],  // Indus ~68.12°E
+  [68.10,25.00]   // Kotri area — Indus ~68.30°E
+];
+
+// Major Sindh barrages
+const BARRAGES=[
+  {name:'GUDDU BARRAGE', lon:69.72,lat:28.43,info:'Built 1962 · 1,242 ft span'},
+  {name:'SUKKUR BARRAGE',lon:68.86,lat:27.70,info:'Built 1932 · Lloyd Barrage · 4,725 ft'},
+  {name:'KOTRI BARRAGE', lon:68.31,lat:25.37,info:'Built 1955 · G.M. Barrage · 3,000 ft'}
+];
+
+const DISTS=[{n:'LARKANA',lon:68.20,lat:27.58},{n:'QAMBAR\nSHAHDADKOT',lon:67.50,lat:27.18},{n:'DADU',lon:67.82,lat:26.72},{n:'SEHWAN',lon:68.05,lat:26.43},{n:'JAMSHORO',lon:68.22,lat:25.82}];
+const MTNS=[{n:'KOH-E-SULAIMAN\nRANGE',lon:66.85,lat:27.80},{n:'KIRTHAR\nMOUNTAIN RANGE',lon:66.82,lat:26.50},{n:'LAKI HILLS',lon:67.12,lat:25.28}];
+
+// ─── KOHISTAN WATERSHED POLYGON ───────────────────────────────────────────
+// Encloses the Hill Torrent plain between the mountain foothills (west) and
+// the FP Bund / Indus right bank (east). Mirrors the orange/tan shaded area
+// in the reference map. East boundary reuses FP_BUND coordinates (S→N).
+const KOHISTAN_WATERSHED=[
+  // Mountain foothills — west boundary (N → S)
+  [66.90,27.85],[66.82,27.50],[66.80,27.10],[66.82,26.72],
+  [66.88,26.35],[66.95,25.95],[67.05,25.55],[67.10,25.15],
+  // South edge (W → E)
+  [67.35,25.00],[68.10,25.00],
+  // FP Bund — east boundary (S → N)
+  [67.98,25.55],[67.88,25.88],[67.80,26.15],[67.82,26.42],
+  [67.87,26.65],[67.95,26.95],[68.02,27.25],[68.08,27.55],[68.10,27.90],
+  // North edge (E → W) — close ring
+  [66.90,27.85]
+];
+
+// ─── NAI → DISTRICT ROUTING ───────────────────────────────────────────────
+// Maps each Nai to the 1–2 districts it geographically threatens based on
+// the reference map. Northern nais (high latitude) → Larkana/Qambar;
+// central nais → Dadu; southern nais → Jamshoro; Nai Baran also hits Karachi.
+const NAI_DISTRICTS={
+  'Nai Nar':     ['la'],
+  'Nai Muhar':   ['la','qa'],
+  'Nai Kadhan':  ['la','qa'],
+  'Nai Naig':    ['la','qa'],
+  'Nai Bhan':    ['la','qa'],
+  'Nai Pakho':   ['qa','da'],
+  'Nai Dugdu':   ['qa','da'],
+  'Nai Khedro':  ['da'],
+  'Nai Gaj':     ['da'],
+  'Nai Ranjo':   ['da','ja'],
+  'Nai Chandio': ['ja'],
+  'Nai Baran':   ['ja','ka']
+};
+
+// ─── THATTA DIVISION IRRIGATION NETWORK (source: 2025 KMZ) ───────────────
+// Downstream canal infrastructure south of Kotri Barrage.
+// Coverage: lat 24.57–25.44°N, lon 67.50–68.35°E (Kalri Baghar Division)
+// Categorised: major feeders vs. distributaries/minors for layered styling.
+const THATTA_MAJOR_CANALS=[
+  {name:'K.B.Feeder Upper', pts:[[68.1368,25.0411],[68.1361,25.0445],[68.1361,25.0458],[68.1365,25.0468],[68.139,25.0487],[68.141,25.0507],[68.1421,25.0515],[68.1432,25.0523],[68.1444,25.0529],[68.1456,25.0535],[68.1483,25.0543],[68.152,25.0554],[68.153,25.0558],[68.1549,25.0567],[68.1559,25.0572],[68.1577,25.0583],[68.1587,25.0593],[68.1596,25.0603],[68.1606,25.0614],[68.1614,25.0625],[68.1621,25.0636],[68.1628,25.0648],[68.164,25.0662],[68.165,25.0671],[68.1661,25.068],[68.1673,25.0687],[68.1686,25.0694],[68.1696,25.0698],[68.1709,25.0702],[68.1723,25.0706],[68.1736,25.0708],[68.1747,25.0708],[68.1771,25.0707],[68.1886,25.0699],[68.199,25.0691],[68.2,25.069],[68.2015,25.069],[68.2029,25.0692],[68.2039,25.0694],[68.2053,25.0698],[68.2066,25.0703],[68.2079,25.0709],[68.2126,25.0735],[68.2172,25.0763],[68.2214,25.079],[68.2225,25.08],[68.2234,25.081],[68.2243,25.0822],[68.2251,25.0833],[68.2257,25.0844],[68.2295,25.0926],[68.2352,25.1047],[68.236,25.1061],[68.2368,25.1074],[68.2378,25.1086],[68.239,25.1097],[68.2402,25.1107],[68.2524,25.1234],[68.2598,25.1313],[68.261,25.1327],[68.2617,25.1337],[68.2624,25.1348],[68.2629,25.1358],[68.2634,25.1369],[68.2638,25.1381],[68.2641,25.1392],[68.2643,25.1404],[68.2644,25.1416],[68.2644,25.1428],[68.2644,25.144],[68.2642,25.1452],[68.2632,25.1524],[68.2572,25.1973],[68.2558,25.2081],[68.2556,25.2094],[68.2555,25.2106],[68.2555,25.2119],[68.2555,25.2132],[68.2555,25.2144],[68.2556,25.2157],[68.2557,25.217],[68.2559,25.2182],[68.2562,25.2195],[68.2565,25.2207],[68.2568,25.222],[68.2572,25.2232],[68.2576,25.2244],[68.2581,25.2256],[68.2586,25.2268],[68.2591,25.2279],[68.2597,25.2291],[68.2604,25.2302],[68.2611,25.2313],[68.2618,25.2324],[68.2626,25.2334],[68.2634,25.2345],[68.2651,25.2364],[68.2661,25.2374],[68.268,25.2392],[68.2793,25.2487],[68.3051,25.27],[68.3172,25.2803],[68.3208,25.2836],[68.3229,25.2858],[68.3257,25.2894],[68.3273,25.2927],[68.3283,25.2954],[68.3292,25.2992],[68.3295,25.3017],[68.3294,25.3072],[68.3288,25.3136],[68.3283,25.3166],[68.3271,25.321],[68.3259,25.3239],[68.3247,25.3264],[68.3225,25.3305],[68.3201,25.3341],[68.3176,25.3375],[68.3143,25.3413],[68.3096,25.3457],[68.301,25.3522],[68.2955,25.3562],[68.2935,25.358],[68.2924,25.3593],[68.2912,25.361],[68.2896,25.3642],[68.2887,25.3663],[68.2882,25.3682],[68.2882,25.3705],[68.2882,25.3794],[68.2881,25.3817],[68.2877,25.3836],[68.2869,25.3853],[68.2858,25.3876],[68.2848,25.3919],[68.2848,25.3937],[68.2848,25.3959],[68.2851,25.3974],[68.2856,25.399],[68.288,25.4063],[68.2885,25.4095],[68.2888,25.413],[68.2894,25.4238],[68.2898,25.4276],[68.2903,25.43],[68.2912,25.4325],[68.2922,25.4344],[68.2936,25.4364],[68.2956,25.4386],[68.2974,25.44],[68.3005,25.4416],[68.3033,25.4426],[68.3068,25.4433],[68.3092,25.4434],[68.3115,25.4433]]},
+  {name:'K.B.Feeder Lower', pts:[[67.994,24.8394],[67.9918,24.8286],[67.9903,24.8191],[67.9867,24.8101],[67.9781,24.7929],[67.9726,24.7822],[67.9698,24.7761],[67.9684,24.7733],[67.9642,24.764],[67.9613,24.7577],[67.9604,24.7552],[67.9589,24.749],[67.957,24.7405],[67.9551,24.7343],[67.9524,24.7302],[67.9501,24.7277],[67.9488,24.7266],[67.9295,24.7086],[67.9267,24.7061],[67.9244,24.7032],[67.9218,24.6984],[67.918,24.688],[67.9142,24.678],[67.9117,24.65],[67.9116,24.6556],[67.9117,24.6686],[67.9116,24.6365],[67.9107,24.6311],[67.908,24.6189],[67.9062,24.6109],[67.9032,24.5975],[67.8991,24.5797]]},
+  {name:'Link Canal', pts:[[67.9867,24.8101],[67.9935,24.8116],[67.9955,24.8119],[67.9994,24.8128],[68.0031,24.8142],[68.0066,24.8161],[68.0097,24.8184],[68.0125,24.821],[68.0149,24.824],[68.0175,24.829],[68.019,24.8343],[68.0197,24.8379],[68.0203,24.8397],[68.021,24.8415],[68.0228,24.8449],[68.0251,24.8479],[68.0275,24.8504],[68.0319,24.8542],[68.0371,24.8593],[68.0424,24.8655],[68.0478,24.872],[68.0543,24.8802],[68.0578,24.8849],[68.0643,24.8915],[68.0671,24.8937],[68.071,24.898],[68.0746,24.9041],[68.0763,24.9081],[68.0777,24.9145],[68.0777,24.9215],[68.0786,24.9268],[68.0796,24.93],[68.0889,24.9573],[68.0923,24.9679],[68.0968,24.9783],[68.1013,24.9839],[68.1053,24.9887],[68.1172,24.9996],[68.1224,25.004],[68.1317,25.0131],[68.1358,25.0183],[68.1374,25.0206],[68.1389,25.0243],[68.1392,25.027],[68.1368,25.0411]]},
+  {name:'Jam Branch', pts:[[67.9726,24.7822],[67.967,24.7836],[67.9635,24.7856],[67.9614,24.7874],[67.9592,24.7898],[67.9568,24.7936],[67.9532,24.7962],[67.9511,24.7966],[67.9476,24.7976],[67.9441,24.7978],[67.9402,24.7942],[67.9383,24.7923],[67.9362,24.7915],[67.9339,24.7915],[67.9315,24.7917],[67.9296,24.7915],[67.9278,24.7914],[67.9221,24.7909],[67.919,24.7912],[67.9177,24.7916],[67.9166,24.7923],[67.9138,24.7965],[67.9127,24.7975],[67.9033,24.7995],[67.8996,24.7998],[67.8971,24.8003],[67.8937,24.8001],[67.886,24.7992],[67.8836,24.7989],[67.8813,24.7992],[67.88,24.7996],[67.8788,24.8002],[67.8777,24.8009],[67.8759,24.8035],[67.8742,24.8054],[67.8716,24.8064],[67.8687,24.8068],[67.8572,24.8061],[67.8476,24.8058],[67.8445,24.8041],[67.8392,24.8016],[67.8311,24.7974],[67.8298,24.7953],[67.8295,24.7923],[67.829,24.7902],[67.8291,24.7838],[67.829,24.7825],[67.8283,24.7801],[67.8264,24.7767],[67.8235,24.7738],[67.8204,24.7722],[67.818,24.7715],[67.8125,24.7709],[67.8048,24.7687],[67.7838,24.763],[67.7813,24.7621],[67.7784,24.7595],[67.7769,24.7546],[67.7743,24.7497],[67.7706,24.7476],[67.7684,24.7461],[67.7662,24.7434],[67.7653,24.7416],[67.762,24.7391],[67.7573,24.7384],[67.7511,24.7371],[67.7465,24.7362],[67.7425,24.7355],[67.7379,24.734],[67.7197,24.7287],[67.7107,24.7284],[67.7045,24.728],[67.7022,24.7284],[67.6999,24.7283],[67.689,24.7264],[67.6814,24.7225],[67.6751,24.7219],[67.67,24.7222],[67.6667,24.7212],[67.6594,24.7164],[67.6533,24.7117],[67.6492,24.7076],[67.6466,24.7044],[67.6386,24.7029],[67.6276,24.7007],[67.6229,24.6985],[67.6185,24.6959],[67.6128,24.6922],[67.5929,24.6778],[67.5825,24.6702],[67.5729,24.6564],[67.5605,24.6379],[67.5539,24.629],[67.5031,24.6287]]}
+];
+const THATTA_MINOR_CANALS=[
+  {name:'Sapa Wah', pts:[[68.2551,25.0634],[68.2584,25.0585],[68.261,25.0563],[68.2601,25.0523],[68.2549,25.0455],[68.2528,25.0412],[68.2501,25.0388],[68.249,25.0373],[68.2464,25.0349],[68.2438,25.0344],[68.2417,25.0331],[68.2376,25.0333],[68.2301,25.0348],[68.2267,25.0356],[68.2224,25.037]]},
+  {name:'Jherruck Distry', pts:[[68.2608,25.1702],[68.2632,25.1621],[68.2647,25.1516],[68.2659,25.141],[68.2659,25.1388],[68.2647,25.1305],[68.2634,25.1216],[68.2595,25.0913],[68.2566,25.0691],[68.2551,25.0634]]},
+  {name:'Tando Hafiz Shah', pts:[[68.2608,25.1704],[68.2717,25.1716],[68.2793,25.1699],[68.3036,25.1609],[68.3134,25.1591],[68.3279,25.1583]]},
+  {name:'Sonda Distry', pts:[[68.1172,24.9996],[68.1197,24.9927],[68.1253,24.9868],[68.127,24.9817],[68.1264,24.9762],[68.1197,24.9662],[68.1072,24.9441],[68.1044,24.9321],[68.094,24.9235],[68.0881,24.9147]]},
+  {name:'Thatta Distry', pts:[[67.9726,24.7822],[67.9657,24.7687],[67.9617,24.7598],[67.9584,24.7489],[67.9559,24.7377],[67.9518,24.7304],[67.9484,24.727]]},
+  {name:'Haji Wah', pts:[[68.121,24.968],[68.116,24.9705],[68.1107,24.9738],[68.1058,24.9749],[68.1009,24.9756],[68.0969,24.9764]]},
+  {name:'Bao Puran Das', pts:[[67.9726,24.7822],[67.9737,24.7778],[67.9740,24.7708],[67.9738,24.7648],[67.9699,24.7573],[67.9682,24.7531],[67.967,24.7514],[67.9657,24.749],[67.9658,24.7478],[67.9675,24.7447],[67.9656,24.7351],[67.9618,24.7248],[67.9568,24.7107],[67.9289,24.6864]]},
+  {name:'Ghar Massan', pts:[[67.9488,24.7266],[67.9456,24.7288],[67.9406,24.7294],[67.9363,24.7314],[67.9322,24.7297],[67.9287,24.7324],[67.9218,24.7326],[67.9168,24.7322],[67.9113,24.7308],[67.9074,24.7289],[67.9035,24.726],[67.8878,24.7115]]},
+  {name:'Ghar Machi', pts:[[67.9484,24.727],[67.9429,24.7248],[67.9382,24.7219],[67.9345,24.7211],[67.9286,24.7189],[67.9276,24.7185],[67.9188,24.712],[67.9148,24.7084],[67.9084,24.7048],[67.9055,24.7022],[67.8972,24.6978]]},
+  {name:'Allah Khai', pts:[[67.9585,24.747],[67.9536,24.7485],[67.9468,24.7493],[67.9405,24.7535],[67.938,24.7549],[67.9335,24.7574],[67.9268,24.762],[67.9244,24.7647]]},
+  {name:'Nari Chach Upper', pts:[[67.962,24.7603],[67.9525,24.7633],[67.9445,24.7628],[67.9357,24.7666],[67.9209,24.7718],[67.9176,24.7772]]},
+  {name:'Khatian Right', pts:[[67.9856,24.8085],[67.9779,24.8108],[67.973,24.8115],[67.9682,24.8094],[67.9636,24.808],[67.9562,24.807],[67.9516,24.8055],[67.9456,24.8037]]},
+  {name:'Khatian Left', pts:[[67.9863,24.8097],[67.9919,24.8094],[67.9926,24.8065],[67.9937,24.8014],[67.9871,24.79]]},
+  {name:'Ghariko', pts:[[67.9147,24.6246],[67.9296,24.6258],[67.945,24.627],[67.9521,24.6275],[67.9542,24.6268],[67.9573,24.623],[67.96,24.6195],[67.9592,24.6143],[67.9591,24.6098],[67.9595,24.606],[67.9583,24.6017],[67.9574,24.5975]]},
+  {name:'Hala', pts:[[67.9117,24.6608],[67.8887,24.6554],[67.884,24.6527],[67.8798,24.6456],[67.8766,24.6383],[67.8696,24.6277],[67.8691,24.6268]]},
+  {name:'Ali Bahar', pts:[[68.1004,24.9281],[68.0979,24.9333],[68.0956,24.94],[68.0933,24.9455],[68.0923,24.9508]]},
+  {name:'Sada Bahar', pts:[[67.9664,24.7702],[67.9654,24.7723],[67.9603,24.7764],[67.9565,24.7815],[67.9491,24.7866],[67.9456,24.7893]]}
+];
+// Kalri Baghar Division boundary polygon (Thatta Division area)
+const KALRI_BAGHAR=[[68.3043,25.4442],[68.3003,25.4428],[68.2963,25.4405],[68.2919,25.4353],[68.2891,25.4297],[68.2851,25.4237],[68.2855,25.4191],[68.2868,25.4146],[68.2849,25.4018],[68.2825,25.3961],[68.282,25.3915],[68.2845,25.3801],[68.2866,25.371],[68.2891,25.362],[68.29,25.3527],[68.2881,25.347],[68.2834,25.3373],[68.2802,25.3283],[68.2795,25.3159],[68.2842,25.3046],[68.285,25.2968],[68.2817,25.2857],[68.272,25.277],[68.2629,25.271],[68.2518,25.2598],[68.239,25.2412],[68.2388,25.2291],[68.2375,25.2226],[68.2408,25.1988],[68.2428,25.1727],[68.2403,25.1591],[68.2412,25.1493],[68.2366,25.1355],[68.2319,25.1318],[68.2283,25.121],[68.2281,25.1139],[68.2255,25.0989],[68.2194,25.084],[68.1999,25.0779],[68.1836,25.0773],[68.1512,25.0683],[68.1391,25.0605],[68.0923,25.0329],[68.0327,25.0291],[68.0207,25.0259],[68.0081,25.0142],[68.0031,25.0024],[67.9987,24.9912],[67.9925,24.9779],[67.9826,24.9701],[67.969,24.9544],[67.9679,24.9451],[67.966,24.9255],[67.9772,24.9009],[67.9807,24.886],[67.9838,24.8532],[67.9703,24.842],[67.9625,24.8283],[67.9505,24.8152],[67.9445,24.7992],[67.9444,24.7918],[67.9453,24.7836],[67.9401,24.7785],[67.9289,24.7811],[67.9202,24.781],[67.9134,24.7731],[67.9088,24.7476],[67.9036,24.735],[67.8921,24.7232],[67.8815,24.716],[67.8894,24.6983],[67.8834,24.6696],[67.8647,24.636],[67.8623,24.6208],[67.8688,24.6053],[67.8823,24.5823],[67.8896,24.5792],[67.906,24.5778],[67.9233,24.5704],[67.9466,24.5817],[67.9655,24.6043],[67.9637,24.6165],[67.9552,24.6333],[67.9558,24.6538],[67.96,24.6722],[67.985,24.7062],[67.9995,24.7366],[68.0093,24.7739],[68.0204,24.8126],[68.0443,24.8594],[68.0592,24.8763],[68.0688,24.8799],[68.087,24.8738],[68.1029,24.8795],[68.1096,24.9003],[68.1154,24.9526],[68.1276,24.9681],[68.1432,24.9879],[68.1802,25.0025],[68.1947,24.9978],[68.225,24.9924],[68.238,25.0036],[68.2482,25.0201],[68.2706,25.067],[68.2743,25.1115],[68.2876,25.1365],[68.3076,25.1408],[68.3213,25.1369],[68.3388,25.1309],[68.3476,25.1353],[68.3528,25.1509],[68.3368,25.1683],[68.322,25.1718],[68.2808,25.1857],[68.285,25.2163],[68.3004,25.2483],[68.3123,25.2594],[68.3325,25.2786],[68.3469,25.3127],[68.3296,25.3562],[68.302,25.3791],[68.3023,25.3921],[68.3094,25.4193],[68.309,25.4389],[68.3075,25.4419],[68.3043,25.4442]];
+
+// ─── TERRAIN ELEVATION via map.queryTerrainElevation() ───────────────────
+// Reads directly from the already-loaded AWS SRTM DEM tiles.
+// No external fetch, no CORS, no API key restriction problems.
+const NAI_ELEV={}; // keyed by Nai name → array of elevations (m)
+let elevLoaded=false;
+
+function loadNaiElevationsFromTerrain(){
+  let anyNonZero=false;
+  for(const n of NAIS){
+    NAI_ELEV[n.name]=[];
+    for(const[lon,lat]of n.pts){
+      // exaggerated:false returns true metres, not exaggerated display height
+      const e=map.queryTerrainElevation([lon,lat],{exaggerated:false})||0;
+      NAI_ELEV[n.name].push(e);
+      if(e>0)anyNonZero=true;
+    }
+    const src=NAI_ELEV[n.name][0];
+    const out=NAI_ELEV[n.name][NAI_ELEV[n.name].length-1];
+    n.elevDrop=Math.max(src-out,1);
+    n.srcElev=src; n.outElev=out;
+  }
+  if(anyNonZero){
+    elevLoaded=true;
+    const maxSrc=Math.max(...NAIS.map(nn=>nn.srcElev||0));
+    const minOut=Math.min(...NAIS.filter(nn=>nn.outElev!=null).map(nn=>nn.outElev));
+    const el=document.getElementById('elev-status');
+    if(el)el.innerHTML=`✅ <span style="color:#64ffda">AWS SRTM terrain · ${Math.round(maxSrc)}m → ${Math.round(minOut)}m · real slope</span>`;
+    console.log('✅ Terrain elevation loaded from SRTM tiles');
+    for(const n of NAIS)console.log(`  ${n.name}: ${Math.round(n.srcElev)}m → ${Math.round(n.outElev)}m (drop ${Math.round(n.elevDrop)}m)`);
+  } else {
+    const el=document.getElementById('elev-status');
+    if(el)el.innerHTML='⚠ Terrain tiles not ready yet · using linear fallback';
+  }
+}
+
+// ─── PHASES ──────────────────────────────────────────────────────────────
+const PHASES=[
+  {id:'DRY',    lbl:'DRY SEASON',        dur:5,  cS:90000, cE:95000},
+  {id:'CLOUDS', lbl:'MONSOON BUILDING',  dur:4,  cS:95000, cE:180000},
+  {id:'RAIN',   lbl:'MONSOON RAINS',     dur:5,  cS:180000,cE:340000},
+  {id:'SURGE',  lbl:'FLASH FLOOD SURGE', dur:15, cS:340000,cE:543184},
+  {id:'PEAK',   lbl:'PEAK DISCHARGE',    dur:5,  cS:543184,cE:635759},
+  {id:'RECESS', lbl:'FLOOD RECEDING',    dur:7,  cS:635759,cE:148000}
+];
+let phI=0,phEl=0,lastTs=0,bGlow=false,alShown=false,curC=90000;
+
+function enterPhase(i){
+  phI=i%PHASES.length;phEl=0;
+  document.getElementById('ph-name').textContent=PHASES[phI].lbl;
+  if(PHASES[phI].id==='DRY'){
+    for(const n of NAIS){n.surge=0;n.active=false;n.fanAlpha=0;n.fanR=0;n.labelAlpha=0;}
+    for(const k in WB)WB[k].fill=0;
+    bGlow=false;alShown=false;document.getElementById('alert').style.opacity=0;
+    rPts=[];cPts=[];updDistByNais();
+  }
+}
+
+// ─── ATMOSPHERE ──────────────────────────────────────────────────────────
+let rPts=[];
+function spawnRain(i){
+  for(let k=0;k<Math.floor(i*5);k++)
+    rPts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight*.82,vy:360+Math.random()*190,vx:48+Math.random()*26,len:12+Math.random()*20,a:.2+Math.random()*.38});
+  rPts=rPts.filter(r=>r.y<innerHeight).slice(-430);
+}
+function drawAtmos(dt,rI,dark){
+  if(dark>0){ctx.fillStyle=`rgba(0,5,25,${dark*.18})`;ctx.fillRect(0,0,cv.width,cv.height);}
+  ctx.save();for(const r of rPts){r.x+=r.vx*dt;r.y+=r.vy*dt;ctx.beginPath();ctx.moveTo(r.x,r.y);ctx.lineTo(r.x-r.vx/r.vy*r.len,r.y-r.len);ctx.strokeStyle=`rgba(148,210,255,${r.a*rI})`;ctx.lineWidth=.85;ctx.stroke();}ctx.restore();
+}
+
+// ─── HELPER: progressive points ──────────────────────────────────────────
+function getProg(sp,surge){
+  const cum=[0];
+  for(let i=1;i<sp.length;i++){const dx=sp[i][0]-sp[i-1][0],dy=sp[i][1]-sp[i-1][1];cum.push(cum[i-1]+Math.sqrt(dx*dx+dy*dy));}
+  const tot=cum[cum.length-1],dLen=surge*tot;
+  let eI=sp.length-1,tx=sp[eI][0],ty=sp[eI][1];
+  if(surge<.999){for(let i=1;i<cum.length;i++){if(cum[i]>=dLen){const f=(dLen-cum[i-1])/(cum[i]-cum[i-1]);eI=i-1;tx=sp[i-1][0]+(sp[i][0]-sp[i-1][0])*f;ty=sp[i-1][1]+(sp[i][1]-sp[i-1][1])*f;break;}}}
+  const pts=[...sp.slice(0,eI+1)];
+  if(surge<.999)pts.push([tx,ty]);
+  return{pts,eI,tx,ty};
+}
+
+// drawElevGrad() removed — screen-space canvas gradients create flat colour
+// patches at pitch 60°. The MapLibre hillshade layer already shows terrain
+// depth and elevation naturally in 3D.
+
+// ─── RIVER POLYGON BUILDER ────────────────────────────────────────────────
+// Offsets a centerline by halfKm on each side using true-metric perpendiculars
+// so the polygon width stays geographically correct regardless of bearing.
+function makeRiverPolygon(centerline,halfKm){
+  const K_LAT=111.32,K_LON=111.32*Math.cos(27*Math.PI/180);
+  const left=[],right=[];
+  for(let i=0;i<centerline.length;i++){
+    const prev=centerline[Math.max(i-1,0)];
+    const next=centerline[Math.min(i+1,centerline.length-1)];
+    const dxKm=(next[0]-prev[0])*K_LON, dyKm=(next[1]-prev[1])*K_LAT;
+    const len=Math.sqrt(dxKm*dxKm+dyKm*dyKm)||1;
+    const px=-dyKm/len, py=dxKm/len; // perpendicular unit vector (left = CCW)
+    const ox=px*halfKm/K_LON, oy=py*halfKm/K_LAT;
+    left.push([+(centerline[i][0]+ox).toFixed(5),+(centerline[i][1]+oy).toFixed(5)]);
+    right.push([+(centerline[i][0]-ox).toFixed(5),+(centerline[i][1]-oy).toFixed(5)]);
+  }
+  return[...left,...right.reverse(),left[0]];
+}
+
+// ─── FLOOD COLOUR HELPERS ────────────────────────────────────────────────
+function getIndusFloodRGB(c){
+  if(c<200000)return[21,101,192];
+  if(c<350000)return[18,88,175];
+  if(c<500000)return[22,72,150];
+  if(c<700000)return[38,58,128];
+  if(c<900000)return[55,42,108];
+  return[70,30,88];
+}
+function getReach(lat){
+  if(lat>28.0)return'GUDDU REACH';
+  if(lat>27.4)return'GUDDU → SUKKUR';
+  if(lat>26.5)return'SUKKUR → SEHWAN';
+  if(lat>25.6)return'SEHWAN → KOTRI';
+  return'KOTRI → DELTA';
+}
+
+// ─── MAPLIBRE LAYER PAINT SYNC ────────────────────────────────────────────
+let mapLayersReady=false,lastIndusCol='';
+function updateMapLayers(){
+  if(!mapLayersReady)return;
+  // ── Indus fill polygon — color darkens/purples with discharge
+  const[r,g,b]=getIndusFloodRGB(curC);
+  const op=(0.78+Math.min(Math.max(curC-90000,0)/545759,1)*0.15).toFixed(3);
+  const col=`rgba(${r},${g},${b},${op})`;
+  if(col!==lastIndusCol){map.setPaintProperty('indus-fill','fill-color',col);lastIndusCol=col;}
+  // ── Indus channel line — width & brightness track discharge (climate feel)
+  // Low-flow: thin (3px), bright azure; Flood: wide (10px), deep steel-blue
+  const t=Math.min(Math.max(curC-90000,0)/545759,1); // 0=normal, 1=peak
+  const chW=+(3+t*7).toFixed(1);                     // 3 → 10 px
+  const chR=Math.round(30+t*20), chG=Math.round(140-t*80), chB=Math.round(255-t*60);
+  map.setPaintProperty('indus-channel','line-width',chW);
+  map.setPaintProperty('indus-channel','line-color',`rgba(${chR},${chG},${chB},0.92)`);
+  // ── FP Bund — color + width animate under flood pressure
+  const aN=NAIS.filter(n=>n.active).length;
+  const bCol=bGlow?(aN>=7?'#ef5350':'#ff9800'):'#c6ff00';
+  map.setPaintProperty('fp-bund-casing','line-color',bGlow?'rgba(230,60,30,0.22)':'rgba(255,255,0,0.12)');
+  map.setPaintProperty('fp-bund-line','line-color',bCol);
+  map.setPaintProperty('fp-bund-line','line-width',bGlow?5:3.5);
+}
+
+// ─── MAPLIBRE NATIVE LAYERS ───────────────────────────────────────────────
+function loadMapLayers(){
+  // ── Kohistan watershed fill ──────────────────────────────────────────────
+  map.addSource('watershed-src',{type:'geojson',data:{type:'Feature',
+    geometry:{type:'Polygon',coordinates:[KOHISTAN_WATERSHED]}}});
+  map.addLayer({id:'watershed-fill',type:'fill',source:'watershed-src',
+    paint:{'fill-color':'rgba(210,148,48,0.11)','fill-outline-color':'rgba(0,0,0,0)'}},
+    'lbl-l');
+  map.addLayer({id:'watershed-outline',type:'line',source:'watershed-src',
+    paint:{'line-color':'rgba(200,135,35,0.38)','line-width':1.4,
+           'line-dasharray':[7,6],'line-cap':'round','line-join':'round'}},
+    'lbl-l');
+
+  // ── Indus River — GPU polygon (thin geographic body) ────────────────────
+  // 0.45 km half-width ≈ 900 m channel — geographically accurate at all zooms.
+  map.addSource('indus-src',{type:'geojson',data:{type:'Feature',
+    geometry:{type:'Polygon',coordinates:[makeRiverPolygon(INDUS,0.45)]}}});
+  map.addLayer({id:'indus-fill',type:'fill',source:'indus-src',
+    paint:{'fill-color':'rgba(21,101,192,0.82)',
+           'fill-color-transition':{duration:1200,delay:0}}});
+  map.addLayer({id:'indus-outline',type:'line',source:'indus-src',
+    paint:{'line-color':'rgba(66,165,245,0.35)','line-width':0.8,
+           'line-cap':'round','line-join':'round'}});
+  // Centerline: drives the channel highlight line AND the label
+  map.addSource('indus-center-src',{type:'geojson',data:{type:'Feature',
+    geometry:{type:'LineString',coordinates:INDUS}}});
+  // Climate-reactive channel highlight — width & color driven by updateMapLayers()
+  map.addLayer({id:'indus-channel',type:'line',source:'indus-center-src',
+    layout:{'line-cap':'round','line-join':'round'},
+    paint:{'line-color':'rgba(30,140,255,0.92)','line-width':3,
+           'line-color-transition':{duration:800,delay:0},
+           'line-width-transition':{duration:800,delay:0}}});
+  map.addLayer({id:'indus-label',type:'symbol',source:'indus-center-src',
+    layout:{'symbol-placement':'line','text-field':'INDUS  RIVER',
+      'text-font':['Open Sans Bold','Noto Sans Bold'],
+      'text-size':11,'text-letter-spacing':0.18,'text-offset':[0,-1.2]},
+    paint:{'text-color':'rgba(120,195,255,0.90)',
+           'text-halo-color':'rgba(2,10,35,0.92)','text-halo-width':1.5}});
+
+  // ── FP Bund — GPU line with dark casing so it pops over the watershed ──────
+  map.addSource('fp-bund-src',{type:'geojson',data:{type:'Feature',
+    geometry:{type:'LineString',coordinates:FP_BUND}}});
+  // Wide dark casing — drawn first so it sits below the bright line
+  map.addLayer({id:'fp-bund-casing',type:'line',source:'fp-bund-src',
+    layout:{'line-cap':'round','line-join':'round'},
+    paint:{'line-color':'rgba(255,255,0,0.12)','line-width':9,
+           'line-color-transition':{duration:600,delay:0}}});
+  // Bright main line on top of casing
+  map.addLayer({id:'fp-bund-line',type:'line',source:'fp-bund-src',
+    layout:{'line-cap':'round','line-join':'round'},
+    paint:{'line-color':'#c6ff00','line-width':3.5,
+           'line-color-transition':{duration:600,delay:0},
+           'line-width-transition':{duration:600,delay:0}}});
+  // FP Bund label flowing along line
+  map.addLayer({id:'fp-bund-label',type:'symbol',source:'fp-bund-src',
+    layout:{'symbol-placement':'line','text-field':'FP BUND  234 km',
+      'text-font':['Open Sans Bold','Noto Sans Bold'],
+      'text-size':8,'text-letter-spacing':0.14,'text-offset':[0,-1.2]},
+    paint:{'text-color':'rgba(210,255,100,0.90)',
+           'text-halo-color':'rgba(0,20,0,0.90)','text-halo-width':1.4}});
+
+  // ── Barrages — invisible hit targets for click interaction ───────────────
+  // Visual rendering stays in canvas drawBarrages(); this layer is click-only.
+  map.addSource('barrages-src',{type:'geojson',data:{type:'FeatureCollection',
+    features:BARRAGES.map(b=>({type:'Feature',
+      properties:{name:b.name,info:b.info},
+      geometry:{type:'Point',coordinates:[b.lon,b.lat]}}))}});
+  map.addLayer({id:'barrages-hit',type:'circle',source:'barrages-src',
+    paint:{'circle-radius':22,'circle-opacity':0,'circle-stroke-width':0}});
+
+  // ── Nai dry-bed guides — split by origin for visual distinction ─────────
+  const naiFeatures=NAIS.map(n=>({type:'Feature',
+    properties:{name:n.name,origin:n.origin,size:n.size},
+    geometry:{type:'LineString',coordinates:n.pts}}));
+
+  // Kirthar group — short dashes, cool blue, flows horizontally W→E
+  const kohFeatures   =naiFeatures.filter(f=>f.properties.origin==='koh');
+  const kirtharFeatures=naiFeatures.filter(f=>f.properties.origin==='kirthar');
+
+  map.addSource('nai-koh-src',    {type:'geojson',data:{type:'FeatureCollection',features:kohFeatures}});
+  map.addSource('nai-kirthar-src',{type:'geojson',data:{type:'FeatureCollection',features:kirtharFeatures}});
+
+  // Koh-e-Sulaiman beds — longer dashes, slightly warmer tone, diagonal paths
+  map.addLayer({id:'nai-beds-koh',type:'line',source:'nai-koh-src',
+    layout:{'line-cap':'round'},
+    paint:{'line-color':'rgba(180,195,240,0.52)',
+           'line-width':['match',['get','size'],'major',2.0,1.5],
+           'line-dasharray':[9,7]}});
+
+  // Kirthar beds — tighter dashes, classic blue
+  map.addLayer({id:'nai-beds-kirthar',type:'line',source:'nai-kirthar-src',
+    layout:{'line-cap':'round'},
+    paint:{'line-color':'rgba(130,205,245,0.42)',
+           'line-width':['match',['get','size'],'major',2.2,'medium',1.3,1.0],
+           'line-dasharray':[5,11]}});
+
+  // ── Thatta Division irrigation network ───────────────────────────────────
+  loadThattaLayers();
+  mapLayersReady=true;
+}
+
+// ─── THATTA DIVISION CANAL LAYERS ────────────────────────────────────────
+// Rendered as MapLibre GPU lines — perfectly locked, no canvas drift.
+// South of Kotri (lat 24.57–25.44°N): K.B. Feeder, Jam Branch, distributaries.
+function loadThattaLayers(){
+  // Kalri Baghar Division boundary polygon
+  map.addSource('kalri-src',{type:'geojson',data:{type:'Feature',
+    geometry:{type:'Polygon',coordinates:[KALRI_BAGHAR]}}});
+  map.addLayer({id:'kalri-fill',type:'fill',source:'kalri-src',
+    paint:{'fill-color':'rgba(0,150,255,0.09)','fill-outline-color':'rgba(0,0,0,0)'}});
+  map.addLayer({id:'kalri-outline',type:'line',source:'kalri-src',
+    paint:{'line-color':'rgba(0,210,255,0.82)','line-width':2,
+           'line-dasharray':[7,5],'line-cap':'round'}});
+
+  // Major feeders — K.B. Feeder Upper/Lower, Link Canal, Jam Branch
+  const majorFeatures=THATTA_MAJOR_CANALS.map(c=>({type:'Feature',
+    properties:{name:c.name},geometry:{type:'LineString',coordinates:c.pts}}));
+  map.addSource('thatta-major-src',{type:'geojson',data:{type:'FeatureCollection',features:majorFeatures}});
+  // Glow halo
+  map.addLayer({id:'thatta-major-glow',type:'line',source:'thatta-major-src',
+    paint:{'line-color':'rgba(0,210,255,0.28)','line-width':9,'line-blur':3}});
+  // Main stroke
+  map.addLayer({id:'thatta-major-line',type:'line',source:'thatta-major-src',
+    paint:{'line-color':'rgba(0,235,255,0.95)','line-width':2.5,
+           'line-cap':'round','line-join':'round'}});
+  // Animated dash overlay handled via paint property
+  map.addLayer({id:'thatta-major-dash',type:'line',source:'thatta-major-src',
+    paint:{'line-color':'rgba(180,255,255,0.72)','line-width':1.5,
+           'line-dasharray':[10,14],'line-cap':'round'}});
+
+  // Distributaries & minors — lighter, thinner
+  const minorFeatures=THATTA_MINOR_CANALS.map(c=>({type:'Feature',
+    properties:{name:c.name},geometry:{type:'LineString',coordinates:c.pts}}));
+  map.addSource('thatta-minor-src',{type:'geojson',data:{type:'FeatureCollection',features:minorFeatures}});
+  map.addLayer({id:'thatta-minor-line',type:'line',source:'thatta-minor-src',
+    paint:{'line-color':'rgba(0,210,245,0.82)','line-width':1.5,
+           'line-dasharray':[5,7],'line-cap':'round'}});
+}
+
+// Indus River + FP Bund now rendered as MapLibre GPU polygon/line layers
+// (see loadMapLayers → 'indus-fill', 'fp-bund-line') — no canvas drawing needed.
+
+// ─── DRAW BARRAGES ───────────────────────────────────────────────────────
+function drawBarrages(ts){
+  const pulse=(Math.sin(ts*.007)+1)*.5;
+  for(const b of BARRAGES){
+    const[cx,cy]=P(b.lon,b.lat);
+    if(cx<-60||cx>cv.width+60||cy<-60||cy>cv.height+60)continue;
+    ctx.save();
+    // Cross-river bar
+    ctx.shadowColor='#ffd54f';ctx.shadowBlur=10+pulse*8;
+    ctx.strokeStyle='rgba(255,213,79,.95)';ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(cx-18,cy);ctx.lineTo(cx+18,cy);ctx.stroke();
+    // Diamond
+    ctx.fillStyle='rgba(255,213,79,.9)';ctx.shadowBlur=14+pulse*6;
+    ctx.beginPath();ctx.moveTo(cx,cy-7);ctx.lineTo(cx+7,cy);ctx.lineTo(cx,cy+7);ctx.lineTo(cx-7,cy);ctx.closePath();ctx.fill();
+    // Name label
+    ctx.shadowBlur=6;ctx.shadowColor='rgba(0,0,0,.95)';
+    ctx.font='bold 9px Segoe UI';ctx.textAlign='left';ctx.fillStyle='rgba(255,235,140,.96)';ctx.fillText(b.name,cx+14,cy-1);
+    ctx.font='7px Segoe UI';ctx.fillStyle='rgba(200,175,90,.72)';ctx.fillText(b.info,cx+14,cy+10);
+    ctx.restore();
+  }
+}
+
+// ─── HELPER: smooth Catmull-Rom bezier path ──────────────────────────────
+function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.arcTo(x+w,y,x+w,y+r,r);c.lineTo(x+w,y+h-r);c.arcTo(x+w,y+h,x+w-r,y+h,r);c.lineTo(x+r,y+h);c.arcTo(x,y+h,x,y+h-r,r);c.lineTo(x,y+r);c.arcTo(x,y,x+r,y,r);c.closePath();}
+function bezierPath(pts){
+  ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(i-1,0)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(i+2,pts.length-1)];
+    const cp1x=p1[0]+(p2[0]-p0[0])/6,cp1y=p1[1]+(p2[1]-p0[1])/6;
+    const cp2x=p2[0]-(p3[0]-p1[0])/6,cp2y=p2[1]-(p3[1]-p1[1])/6;
+    ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,p2[0],p2[1]);
+  }
+}
+// ─── HELPER: position on path at fraction t [0–1] ────────────────────────
+function pathPos(pts,t){
+  if(pts.length<2)return pts[0]||[0,0];
+  const cum=[0];
+  for(let i=1;i<pts.length;i++){const dx=pts[i][0]-pts[i-1][0],dy=pts[i][1]-pts[i-1][1];cum.push(cum[i-1]+Math.sqrt(dx*dx+dy*dy));}
+  const tot=cum[cum.length-1],d=t*tot;
+  for(let i=1;i<cum.length;i++){if(cum[i]>=d){const f=(d-cum[i-1])/(cum[i]-cum[i-1]);return[pts[i-1][0]+(pts[i][0]-pts[i-1][0])*f,pts[i-1][1]+(pts[i][1]-pts[i-1][1])*f];}}
+  return pts[pts.length-1];
+}
+
+// ─── DRAW NAI — surface runoff simulation ───────────────────────────────────
+// Surface runoff (not channel flow): water SHEETS across the terrain surface,
+// carrying sediment, spreading sideways, with turbulent spray at the flood front.
+//
+// Visual stack:
+//  1. Wet-terrain darkening  — ground gets visibly darker as water passes
+//  2. Water-surface sheet    — wide semi-transparent inundation layer
+//  3. Foam / froth edges     — white frothy lines at the spreading boundary
+//  4. Velocity streaks       — short oriented streaks spread across FULL WIDTH
+//                              (this is what makes it look like sheet flow, not pipe)
+//  5. Turbulent spray front  — chaotic scatter of droplets at the surge tip
+//  6. Outlet ripple pool     — expanding rings on standing water
+function drawNai(n,ts){
+  const sp=n.pts.map(([lo,la])=>P(lo,la));
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  if(n.surge<=0){ctx.restore();return;}
+  const{pts:dp,eI,tx,ty}=getProg(sp,n.surge);
+  if(dp.length<2){ctx.restore();return;}
+
+  const elevs=NAI_ELEV[n.name];
+  const srcE=elevLoaded&&elevs?elevs[0]:300;
+  const totDrop=elevLoaded&&n.elevDrop?n.elevDrop:100;
+
+  // Pre-compute perpendicular normals + widths for every waypoint
+  const nrm=[],wid=[];
+  for(let i=0;i<dp.length;i++){
+    const t=i/Math.max(dp.length-1,1);
+    let bw;
+    if(elevLoaded&&elevs&&i<elevs.length){
+      const df=Math.min(Math.max(srcE-elevs[i],0)/totDrop,1);
+      bw=(2+df*18)*Math.min(n.surge*1.5,1);
+    } else {
+      bw=(2+t*16)*Math.min(n.surge*1.5,1);
+    }
+    // Organic edge variation — slow undulation makes boundary look alive
+    const noise=1+0.20*Math.sin(ts*0.0018+i*1.8+n.delay*3.2);
+    wid.push(bw*noise);
+    let dx,dy;
+    if(i===0){dx=dp[1][0]-dp[0][0];dy=dp[1][1]-dp[0][1];}
+    else if(i===dp.length-1){dx=dp[i][0]-dp[i-1][0];dy=dp[i][1]-dp[i-1][1];}
+    else{dx=dp[i+1][0]-dp[i-1][0];dy=dp[i+1][1]-dp[i-1][1];}
+    const L=Math.sqrt(dx*dx+dy*dy)||1;
+    nrm.push([-dy/L,dx/L]);
+  }
+
+  // Helper: build offset polygon one side
+  function sidePolyPts(mult){
+    return dp.map((p,i)=>[p[0]+nrm[i][0]*wid[i]*mult, p[1]+nrm[i][1]*wid[i]*mult]);
+  }
+  function fillPoly(lPts,rPts,grad){
+    ctx.beginPath();ctx.moveTo(lPts[0][0],lPts[0][1]);
+    for(const p of lPts)ctx.lineTo(p[0],p[1]);
+    for(let i=rPts.length-1;i>=0;i--)ctx.lineTo(rPts[i][0],rPts[i][1]);
+    ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+  }
+  function makeGrad(stops){
+    const g=ctx.createLinearGradient(dp[0][0],dp[0][1],dp[dp.length-1][0],dp[dp.length-1][1]);
+    stops.forEach(([p,c])=>g.addColorStop(p,c));return g;
+  }
+
+  // ── 1. WET TERRAIN DARKENING ────────────────────────────────────────────
+  // Ground absorbs water and darkens. Wide shadow under the entire flow sheet.
+  fillPoly(sidePolyPts(2.2),sidePolyPts(-2.2),makeGrad([
+    [0,   `rgba(45,28,10,${0.28*n.surge})`],
+    [0.3, `rgba(18,30,65,${0.22*n.surge})`],
+    [1,   `rgba(8,25,70,${0.25*n.surge})`]
+  ]));
+
+  // ── 2. WATER SURFACE SHEET ──────────────────────────────────────────────
+  // Thin translucent layer covering the inundation width — semi-transparent
+  // so the terrain is still visible underneath (real runoff looks like this).
+  fillPoly(sidePolyPts(1),sidePolyPts(-1),makeGrad([
+    [0,    `rgba(148,108,48,${0.42*n.surge})`],  // turbid silt at source
+    [0.18, `rgba(42,95,165,${0.32*n.surge})`],
+    [0.6,  `rgba(18,108,195,${0.36*n.surge})`],
+    [1,    `rgba(10,80,175,${0.32*n.surge})`]
+  ]));
+
+  // ── 3. FOAM / FROTH LINES at spreading edges ─────────────────────────────
+  // Where fast-moving water meets dry ground it creates a white frothy edge.
+  for(const side of[1,-1]){
+    const ePts=dp.map((p,i)=>{
+      const w=wid[i]*(0.88+0.10*Math.sin(ts*0.004+i*2.3+side));
+      return[p[0]+nrm[i][0]*w*side, p[1]+nrm[i][1]*w*side];
+    });
+    ctx.beginPath();bezierPath(ePts);
+    ctx.strokeStyle=`rgba(225,238,255,${0.24*n.surge})`;
+    ctx.lineWidth=1.4;ctx.shadowBlur=5;ctx.shadowColor='rgba(210,230,255,.6)';ctx.stroke();
+  }
+
+  // ── 4. VELOCITY STREAKS across the full width ────────────────────────────
+  // THIS is what makes it look like surface runoff, not pipe/channel flow.
+  // Short oriented streaks scattered across the ENTIRE inundation width —
+  // like you'd see looking down at a muddy hillside during heavy rain.
+  if(n.surge>0.08){
+    const SPR=5;   // streaks per path segment (spread across width)
+    const SPD=0.00017;
+    for(let i=0;i<dp.length-1;i++){
+      const tNorm=i/Math.max(dp.length-2,1);
+      if(tNorm>n.surge+0.04)break;
+      // Local flow vector (normalised)
+      const fdx=dp[Math.min(i+1,dp.length-1)][0]-dp[Math.max(i-1,0)][0];
+      const fdy=dp[Math.min(i+1,dp.length-1)][1]-dp[Math.max(i-1,0)][1];
+      const fL=Math.sqrt(fdx*fdx+fdy*fdy)||1;
+      const fx=fdx/fL,fy=fdy/fL;
+      const segDist=Math.sqrt((dp[i+1][0]-dp[i][0])**2+(dp[i+1][1]-dp[i][1])**2);
+      const w=wid[i];
+
+      for(let s=0;s<SPR;s++){
+        // Lateral position: spread evenly from -0.9w to +0.9w
+        const lat=(s/(SPR-1)*2-1)*0.9;
+        // Animated longitudinal position along segment
+        const lp=((ts*SPD + i*0.28 + s*0.19 + n.delay*0.08)%1)*segDist;
+        const bx=dp[i][0]+fx*lp + nrm[i][0]*w*lat;
+        const by=dp[i][1]+fy*lp + nrm[i][1]*w*lat;
+        // Streak length: longer on steep slopes (fast), shorter on flat plains
+        const sLen=3+Math.max(0,1-tNorm)*9;
+        const alpha=(0.30+0.28*Math.sin(ts*0.032+s*1.9+i*0.6))*n.surge;
+        // Colour: muddy tan→clear cyan across source→outlet
+        const mf=Math.max(0,1-tNorm*2.8);
+        const rc=Math.round(215*mf+80*(1-mf));
+        const gc=Math.round(168*mf+210*(1-mf));
+        const bc=Math.round(75*mf+255*(1-mf));
+        ctx.beginPath();
+        ctx.moveTo(bx-fx*sLen*0.5,by-fy*sLen*0.5);
+        ctx.lineTo(bx+fx*sLen*0.5,by+fy*sLen*0.5);
+        ctx.strokeStyle=`rgba(${rc},${gc},${bc},${alpha})`;
+        ctx.lineWidth=0.95;
+        ctx.shadowBlur=3;ctx.shadowColor=`rgba(${rc},${gc},${bc},.65)`;
+        ctx.stroke();
+      }
+    }
+  }
+
+  // ── 5. TURBULENT SPRAY FRONT ─────────────────────────────────────────────
+  // The leading edge of a flash flood is chaotic — spray droplets scatter
+  // sideways and forward. NOT a clean ring — scattered splash particles.
+  if(n.surge<0.999){
+    const pulse=(Math.sin(ts*0.028)+1)*0.5;
+    const fDir=Math.atan2(ty-(dp[dp.length-2]||dp[0])[1], tx-(dp[dp.length-2]||dp[0])[0]);
+    const SPRAY=16;
+    for(let s=0;s<SPRAY;s++){
+      // Fan out from the front in a ±90° arc
+      const ang=fDir+(Math.random()*0-0)+(Math.sin(ts*0.05+s*1.9)*0.9);
+      const dist=(1.5+Math.abs(Math.sin(ts*0.06+s*1.2))*4)*pulse;
+      const spx=tx+Math.cos(ang)*dist*(wid[dp.length-1]||4)*0.35;
+      const spy=ty+Math.sin(ang)*dist*(wid[dp.length-1]||4)*0.35;
+      const sa=(0.22+0.32*Math.sin(ts*0.04+s*1.4))*n.surge;
+      ctx.beginPath();ctx.arc(spx,spy,1.2+Math.abs(Math.sin(ts*0.05+s))*0.9,0,Math.PI*2);
+      ctx.fillStyle=`rgba(215,232,255,${sa})`;
+      ctx.shadowBlur=5;ctx.shadowColor='rgba(200,225,255,.7)';ctx.fill();
+    }
+    // Primary front ring
+    ctx.beginPath();ctx.arc(tx,ty,9+pulse*6,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(228,243,255,${0.42*pulse})`;
+    ctx.lineWidth=1.8;ctx.shadowBlur=12;ctx.shadowColor='rgba(200,225,255,.7)';ctx.stroke();
+    // Bright tip dot
+    ctx.beginPath();ctx.arc(tx,ty,2.8,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.85)';ctx.shadowBlur=14;ctx.shadowColor='#fff';ctx.fill();
+  } else {
+    // ── 6. OUTLET STANDING POOL with expanding ripple rings ─────────────
+    n.fanAlpha=Math.min((n.fanAlpha||0)+0.007,0.36);
+    n.fanR=Math.min((n.fanR||0)+0.35,22);
+    ctx.beginPath();ctx.arc(tx,ty,n.fanR,0,Math.PI*2);
+    ctx.fillStyle=`rgba(16,105,195,${n.fanAlpha})`;
+    ctx.shadowBlur=12;ctx.shadowColor='#29b6f6';ctx.fill();
+    // Expanding ripple rings (3 staggered)
+    for(let r=1;r<=3;r++){
+      const rPhase=((ts*0.00055+r*0.33)%1);
+      const rRad=rPhase*n.fanR*1.6;
+      const rAlpha=(1-rPhase)*0.20*(n.fanAlpha/0.36);
+      ctx.beginPath();ctx.arc(tx,ty,rRad,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(90,195,255,${rAlpha})`;
+      ctx.lineWidth=0.9;ctx.shadowBlur=3;ctx.stroke();
+    }
+    // Name label
+    n.labelAlpha=Math.min((n.labelAlpha||0)+0.012,1);
+    if(n.labelAlpha>0.06){
+      const mi=sp[Math.floor(sp.length/2)];
+      ctx.globalAlpha=n.labelAlpha;ctx.font='700 9px Segoe UI';ctx.textAlign='center';
+      const tw=ctx.measureText(n.name).width;
+      ctx.fillStyle='rgba(2,8,20,.78)';ctx.fillRect(mi[0]-tw/2-4,mi[1]-10,tw+8,16);
+      ctx.fillStyle='#90caf9';ctx.shadowBlur=5;ctx.shadowColor='#29b6f6';
+      ctx.fillText(n.name,mi[0],mi[1]+1);ctx.globalAlpha=1;
+    }
+  }
+
+  // ── SOURCE LABEL at mountain origin ─────────────────────────────────────
+  // Shows once the surge is visible — pinned to the first pts coordinate
+  if(n.surge>0.12){
+    const src=sp[0];
+    const isKoh=n.origin==='koh';
+    const srcAlpha=Math.min(n.surge*3,1);
+    ctx.save();ctx.globalAlpha=srcAlpha;
+    const lbl=n.name;
+    ctx.font='600 8px Segoe UI';
+    const tw=ctx.measureText(lbl).width;
+    const px=src[0], py=src[1];
+    // Pill background
+    const bgCol=isKoh?'rgba(60,40,110,0.82)':'rgba(18,42,80,0.82)';
+    const bdCol=isKoh?'rgba(180,160,255,0.60)':'rgba(100,185,245,0.55)';
+    ctx.fillStyle=bgCol;
+    roundRect(ctx,px-tw/2-5,py-13,tw+10,15,3);ctx.fill();
+    ctx.strokeStyle=bdCol;ctx.lineWidth=0.8;
+    roundRect(ctx,px-tw/2-5,py-13,tw+10,15,3);ctx.stroke();
+    // Range tag above the pill
+    const tag=isKoh?'KSR':'KTR';
+    ctx.font='500 6px Segoe UI';
+    const tagW=ctx.measureText(tag).width;
+    ctx.fillStyle=isKoh?'rgba(80,55,130,0.78)':'rgba(15,35,65,0.78)';
+    roundRect(ctx,px-tagW/2-3,py-22,tagW+6,9,2);ctx.fill();
+    ctx.fillStyle=isKoh?'rgba(200,185,255,0.90)':'rgba(140,210,255,0.90)';
+    ctx.textAlign='center';ctx.fillText(tag,px,py-15);
+    // Nai name
+    ctx.font='600 8px Segoe UI';
+    ctx.fillStyle=isKoh?'rgba(210,200,255,0.95)':'rgba(160,225,255,0.95)';
+    ctx.fillText(lbl,px,py-2);
+    // Tick line down to the Nai path start
+    ctx.beginPath();ctx.moveTo(px,py+3);ctx.lineTo(px,py+7);
+    ctx.strokeStyle=bdCol;ctx.lineWidth=1;ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── DAM MARKER ───────────────────────────────────────────────────────────
+  if(n.hasDam&&n.surge>0.4){
+    const dp2=P(n.damAt[0],n.damAt[1]);
+    ctx.beginPath();ctx.moveTo(dp2[0],dp2[1]-9);ctx.lineTo(dp2[0]+9,dp2[1]);
+    ctx.lineTo(dp2[0],dp2[1]+9);ctx.lineTo(dp2[0]-9,dp2[1]);ctx.closePath();
+    ctx.fillStyle='rgba(255,193,7,.92)';ctx.shadowBlur=16;ctx.shadowColor='#ffc107';ctx.fill();
+    ctx.font='bold 8px Segoe UI';ctx.textAlign='left';
+    ctx.fillStyle='rgba(255,215,60,.96)';ctx.shadowBlur=4;
+    ctx.fillText('NAI GAJ DAM',dp2[0]+13,dp2[1]+3);
+  }
+  ctx.restore();
+}
+
+// ─── DRAW LAKES (always show outline, fill when active) ──────────────────
+function drawLakes(ts){
+  for(const[k,b]of Object.entries(WB)){
+    const[cx,cy]=P(b.lon,b.lat);
+    const f=b.fill;
+    const rxBase=mToPx(b.rxM,b.lat),ryBase=mToPx(b.ryM,b.lat);
+    const rx=rxBase*Math.max(f,.12),ry=ryBase*Math.max(f,.12);
+    ctx.save();
+    // Always show outline (helps locate them even when empty)
+    if(f<.08){
+      ctx.beginPath();ctx.ellipse(cx,cy,rxBase*.18,ryBase*.18,0,0,Math.PI*2);
+      ctx.strokeStyle='rgba(66,165,245,.35)';ctx.lineWidth=1;ctx.setLineDash([3,5]);ctx.stroke();ctx.setLineDash([]);
+      ctx.font='7px Segoe UI';ctx.textAlign='center';ctx.fillStyle='rgba(100,165,210,.45)';ctx.fillText(b.name,cx,cy-ryBase*.22);
+      ctx.restore();continue;
+    }
+    // Glow halo
+    const grd=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(rx,ry)*1.35);
+    grd.addColorStop(0,`rgba(21,101,192,${.55*f})`);grd.addColorStop(.6,`rgba(13,71,161,${.28*f})`);grd.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=grd;ctx.beginPath();ctx.ellipse(cx,cy,rx*1.35,ry*1.35,0,0,Math.PI*2);ctx.fill();
+    // Lake body
+    ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);
+    ctx.fillStyle=`rgba(21,101,192,${.82*f})`;ctx.shadowColor='#42a5f5';ctx.shadowBlur=18*f;ctx.fill();
+    // Ripple shimmer
+    ctx.setLineDash([5,12]);ctx.lineDashOffset=-(ts*.018)%17;
+    ctx.strokeStyle=`rgba(100,200,255,${.25*f})`;ctx.lineWidth=1.5;ctx.stroke();ctx.setLineDash([]);
+    // Shoreline
+    ctx.strokeStyle=`rgba(66,165,245,${.55*f})`;ctx.lineWidth=1.2;ctx.shadowBlur=8*f;ctx.stroke();
+    ctx.shadowBlur=0;
+    // Name label
+    const fs=k==='manchar'?11:9;
+    ctx.font=`700 ${fs}px Segoe UI`;ctx.textAlign='center';ctx.fillStyle=`rgba(225,242,255,${f*.92})`;ctx.fillText(b.name,cx,cy-ry*.3);
+    // Sub label
+    if(b.sub&&f>.18){ctx.font='7.5px Segoe UI';ctx.fillStyle=`rgba(160,210,245,${f*.75})`;ctx.fillText(b.sub,cx,cy+ry*.38);}
+    // Capacity %
+    if(f>.12){ctx.font='700 9px Segoe UI';ctx.fillStyle=`rgba(100,220,255,${f*.88})`;ctx.fillText(Math.round(f*100)+'%',cx,cy+ry*.65);}
+    ctx.restore();
+  }
+}
+
+// ─── DRAW LABELS ─────────────────────────────────────────────────────────
+function drawLabels(){
+  ctx.save();
+  for(const d of DISTS){const[px,py]=P(d.lon,d.lat);ctx.font='700 10px Segoe UI';ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,.68)';ctx.shadowBlur=6;ctx.shadowColor='rgba(0,0,0,.95)';d.n.split('\n').forEach((l,i)=>ctx.fillText(l,px,py+i*12));}
+  for(const l of MTNS){const[px,py]=P(l.lon,l.lat);ctx.font='italic 8px Segoe UI';ctx.fillStyle='rgba(220,195,148,.65)';ctx.textAlign='center';ctx.shadowBlur=3;ctx.shadowColor='rgba(0,0,0,.8)';l.n.split('\n').forEach((ln,i)=>ctx.fillText(ln,px,py+i*10));}
+  // Thatta Division / Kalri Baghar area label (south of Kotri)
+  const thattaRegions=[
+    {n:'THATTA\nDIVISION',lon:68.08,lat:24.95},
+    {n:'KALRI BAGHAR\nCANAL DIV.',lon:68.20,lat:25.20}
+  ];
+  for(const t of thattaRegions){
+    const[px,py]=P(t.lon,t.lat);
+    ctx.font='600 8px Segoe UI';ctx.textAlign='center';
+    ctx.fillStyle='rgba(0,210,165,.72)';ctx.shadowBlur=4;ctx.shadowColor='rgba(0,0,0,.9)';
+    t.n.split('\n').forEach((ln,i)=>ctx.fillText(ln,px,py+i*10));
+  }
+  ctx.restore();
+}
+
+// drawFloodPlain() removed — screen-space rectangle tinted the entire
+// right half of the canvas regardless of actual geographic flood extent.
+// Flood inundation is now shown only by the Nai water-spread polygons
+// and the lake/reservoir fills, which are properly geo-referenced.
+
+// ─── CHART ───────────────────────────────────────────────────────────────
+const cPtsArr=new Array(90).fill(null);let chart;
+function initChart(){
+  const c2=document.getElementById('chartCanvas').getContext('2d');
+  const mk=(y,col)=>({type:'line',data:new Array(90).fill(y),borderColor:col,borderWidth:.8,borderDash:[4,5],pointRadius:0,fill:false,tension:0,label:''});
+  chart=new Chart(c2,{type:'line',data:{labels:new Array(90).fill(''),datasets:[
+    {label:'Discharge',data:[...cPtsArr],borderColor:'#29b6f6',borderWidth:2,pointRadius:0,fill:true,
+     backgroundColor:(c3=>{const g=c3.chart.ctx.createLinearGradient(0,0,0,300);g.addColorStop(0,'rgba(41,182,246,.32)');g.addColorStop(1,'rgba(41,182,246,.02)');return g;}),tension:.4},
+    mk(543184,'rgba(255,152,0,.5)'),mk(635759,'rgba(239,83,80,.5)'),mk(200000,'rgba(102,187,106,.38)'),mk(500000,'rgba(255,193,7,.32)')
+  ]},options:{responsive:true,maintainAspectRatio:false,animation:false,
+    scales:{x:{display:false},y:{min:0,max:700000,grid:{color:'rgba(255,255,255,.04)',drawBorder:false},ticks:{color:'rgba(120,170,215,.65)',font:{size:6.5},callback:v=>v===0?'0':(v/1000).toFixed(0)+'k'},border:{display:false}}},
+    plugins:{legend:{display:false},tooltip:{enabled:false}}}});
+}
+function pushChart(v){cPtsArr.shift();cPtsArr.push(v);if(chart){chart.data.datasets[0].data=[...cPtsArr];chart.update('none');}}
+
+// ─── UI STAGE + DISTRICTS ────────────────────────────────────────────────
+const STAGES=[
+  {id:'st-n',min:0,     max:200000, col:'#43a047',lbl:'NORMAL',    bg:'rgba(67,160,71,.25)',tc:'#66bb6a'},
+  {id:'st-l',min:200000,max:350000, col:'#8bc34a',lbl:'LOW FLOOD', bg:'rgba(139,195,74,.25)',tc:'#9ccc65'},
+  {id:'st-m',min:350000,max:500000, col:'#ffc107',lbl:'MEDIUM',    bg:'rgba(255,193,7,.25)',tc:'#ffca28'},
+  {id:'st-h',min:500000,max:700000, col:'#ff9800',lbl:'HIGH FLOOD',bg:'rgba(255,152,0,.3)',tc:'#ffa726'},
+  {id:'st-v',min:700000,max:900000, col:'#f44336',lbl:'VERY HIGH', bg:'rgba(244,67,54,.3)',tc:'#ef5350'},
+  {id:'st-s',min:900000,max:Infinity,col:'#7b1fa2',lbl:'SUPER',   bg:'rgba(123,31,162,.3)',tc:'#ba68c8'}
+];
+function getStage(c){return STAGES.find(s=>c>=s.min&&c<s.max)||STAGES[0];}
+function updateStageUI(c){
+  const cur=getStage(c);
+  STAGES.forEach(s=>{const r=document.getElementById(s.id);if(!r)return;const a=s.id===cur.id;r.classList.toggle('act',a);r.style.opacity=a?'1':'0.4';const bi=r.querySelector('.sbi');if(bi)bi.style.boxShadow=a?`0 0 9px ${s.col}`:'none';});
+  const el=document.getElementById('dis-stage');if(el){el.textContent=cur.lbl;el.style.background=cur.bg;el.style.color=cur.tc;}
+}
+function updDistByNais(){
+  // Derive per-district status from active nais and their surge level.
+  // Each nai affects only the 1–2 districts it geographically drains into,
+  // so northern nais never incorrectly flag Karachi, and vice versa.
+  const status={da:'ok',ja:'ok',qa:'ok',la:'ok',ka:'ok'};
+  for(const n of NAIS){
+    if(!n.active||n.surge<=0)continue;
+    for(const d of(NAI_DISTRICTS[n.name]||[])){
+      if(n.surge>0.65)status[d]='critical';
+      else if(status[d]==='ok')status[d]='risk';
+    }
+  }
+  const m={
+    ok:      {d:'#43a047',sb:'rgba(67,160,71,.2)', sc:'#66bb6a',sl:'OK'},
+    risk:    {d:'#ffc107',sb:'rgba(255,193,7,.25)',sc:'#ffca28',sl:'RISK'},
+    critical:{d:'#f44336',sb:'rgba(244,67,54,.28)',sc:'#ef5350',sl:'CRITICAL'}
+  };
+  for(const[id,mode]of Object.entries(status)){
+    const c=m[mode];
+    const dot=document.getElementById('dd-'+id),st=document.getElementById('ds-'+id);
+    if(dot)dot.style.background=c.d;
+    if(st){st.style.background=c.sb;st.style.color=c.sc;st.textContent=c.sl;}
+  }
+}
+function updLegGlow(aN,bg){
+  const ls=document.getElementById('leg-surge'),lb=document.getElementById('leg-fpb'),ll=document.getElementById('leg-lake');
+  if(ls){ls.style.opacity=aN>0?1:.48;ls.style.filter=aN>0?'drop-shadow(0 0 3px #29b6f6)':'';}
+  if(lb){lb.style.opacity=bg?1:.48;lb.style.filter=bg?'drop-shadow(0 0 3px #43a047)':'';}
+  if(ll){ll.style.opacity=Object.values(WB).some(w=>w.fill>.08)?1:.48;}
+}
+
+// ─── ANIMATION STATE (separate from drawing so we can sync to map render) ─
+let ctTick=0,animActive=false,simTs=0;
+
+function updateState(ts){
+  // dt capped at 50ms to prevent jumps after tab switch
+  if(!lastTs)lastTs=ts;
+  const dt=Math.min((ts-lastTs)/1000,.05);lastTs=ts;phEl+=dt;
+  const ph=PHASES[phI],pf=Math.min(phEl/ph.dur,1);
+  document.getElementById('ph-fill').style.width=(pf*100)+'%';
+  if(pf>=1)enterPhase(phI+1);
+  curC=ph.cS+(ph.cE-ph.cS)*pf;
+  ctTick+=dt;if(ctTick>=.22){ctTick=0;pushChart(Math.round(curC));}
+  document.getElementById('dis-big').textContent=Math.round(curC).toLocaleString();
+  updateStageUI(curC);
+  return{ph,pf,dt};
+}
+
+function drawCanvas(ts){
+  const{ph,pf,dt}=updateState(ts);
+  const storm=['RAIN','SURGE','PEAK'].includes(ph.id);
+  const rI=ph.id==='RAIN'?pf:storm?1:0;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(rI>0)spawnRain(rI);
+  drawAtmos(dt,rI,storm?1:0);
+  let aN=0;
+  if(ph.id==='SURGE'||ph.id==='PEAK'){
+    for(const n of NAIS){if(phEl>=n.delay){n.active=true;n.surge=Math.min(n.surge+dt*n.spd,1);}if(n.surge>=1&&n.to)WB[n.to].fill=Math.min(WB[n.to].fill+dt*.055,1);if(n.active)aN++;}
+    if(!alShown&&aN>=3){alShown=true;const al=document.getElementById('alert');al.style.opacity=1;setTimeout(()=>al.style.opacity=0,5000);}
+    updDistByNais();
+    bGlow=aN>=5;
+    document.getElementById('m-nai').textContent=aN;document.getElementById('m-bund').textContent=bGlow?'⚠ UNDER PRESSURE':'MONITORING';document.getElementById('m-bund').style.color=bGlow?'#ff9800':'#43a047';
+  }
+  if(ph.id==='RECESS'){for(const n of NAIS){n.surge=Math.max(n.surge-dt*.05,0);if(n.surge<.04)n.active=false;}for(const k in WB)WB[k].fill=Math.max(WB[k].fill-dt*.018,0);bGlow=false;aN=NAIS.filter(n=>n.active).length;updDistByNais();}
+  if(ph.id==='DRY'){document.getElementById('m-nai').textContent=0;document.getElementById('m-bund').textContent='MONITORING';document.getElementById('m-bund').style.color='#43a047';}
+  updateMapLayers();
+  drawBarrages(ts);
+  for(const n of NAIS)drawNai(n,ts);
+  drawLakes(ts);drawLabels();
+  const mp=Math.round(WB.manchar.fill*100),hp=Math.round(WB.hamal.fill*100),gp=Math.round(WB.gajdam.fill*100),dp=Math.round(WB.darawai.fill*100);
+  [['m',mp],['h',hp],['g',gp],['d',dp]].forEach(([k,v])=>{const gl=document.getElementById('gl-'+k),gf=document.getElementById('gf-'+k);if(gl)gl.textContent=v+'%';if(gf)gf.style.width=v+'%';});
+  updLegGlow(aN,bGlow);
+}
+
+// ─── KEY FIX: bind canvas draw to MapLibre's own render cycle ─────────────
+// map.on('render') fires AFTER MapLibre has updated its projection matrix,
+// so map.project() returns the correct screen coords for the current frame.
+// map.triggerRepaint() asks MapLibre to render another frame → keeps loop alive.
+map.on('render',()=>{
+  if(!animActive)return;
+  const ts=performance.now();
+  simTs=ts;
+  drawCanvas(ts);
+  map.triggerRepaint(); // keep animation loop alive
+});
+
+// ─── START ────────────────────────────────────────────────────────────────
+function startSim(){
+  const intro=document.getElementById('intro');intro.classList.add('fade');
+  setTimeout(()=>intro.style.display='none',1500);
+  // Load terrain elevations now that tiles are ready
+  loadNaiElevationsFromTerrain();
+  initChart();enterPhase(0);
+  animActive=true;
+  map.triggerRepaint(); // kick off the render-sync loop
+}
+map.on('load',()=>{
+  map.setTerrain({source:'dem',exaggeration:2.5});
+  map.setSky({'sky-color':'#1e3a5f','sky-horizon-blend':.4,'horizon-color':'#c8dff0',
+    'horizon-fog-blend':.3,'fog-color':'#d4e8f4','fog-ground-blend':.8});
+  // Add all geographic line layers (GPU-rendered, map-locked)
+  loadMapLayers();
+  // Cinematic intro camera — pitch forward to reveal 3D terrain
+  map.easeTo({pitch:60,zoom:7.8,bearing:-5,center:[68.0,26.2],duration:4000,
+    easing:t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2});
+  map.once('idle',startSim);
+  setTimeout(()=>{if(document.getElementById('intro').style.display!=='none')startSim();},7000);
+
+  // ── Interactive: Indus River tooltip ────────────────────────────────────
+  const tip=document.getElementById('river-tip');
+  const rtVal=document.getElementById('rt-val');
+  const rtBadge=document.getElementById('rt-badge');
+  const rtReach=document.getElementById('rt-reach');
+  map.on('mousemove','indus-fill',e=>{
+    map.getCanvas().style.cursor='crosshair';
+    tip.style.left=(e.point.x+18)+'px';
+    tip.style.top=(e.point.y-54)+'px';
+    tip.style.display='block';
+    const c=Math.round(curC);
+    rtVal.textContent=c.toLocaleString();
+    const stage=c>700000?'CRITICAL FLOOD':c>500000?'MAJOR FLOOD':c>350000?'MODERATE FLOOD':c>200000?'ELEVATED':'NORMAL';
+    const stageColor=c>700000?'#ef5350':c>500000?'#ff5722':c>350000?'#ffc107':c>200000?'#29b6f6':'#43a047';
+    rtBadge.textContent=stage;rtBadge.style.background=stageColor;
+    rtReach.textContent=getReach(e.lngLat.lat);
+  });
+  map.on('mouseleave','indus-fill',()=>{
+    map.getCanvas().style.cursor='';
+    tip.style.display='none';
+  });
+
+  // ── Interactive: Barrage click popups ───────────────────────────────────
+  map.on('mouseenter','barrages-hit',()=>{map.getCanvas().style.cursor='pointer';});
+  map.on('mouseleave','barrages-hit',()=>{map.getCanvas().style.cursor='';});
+  map.on('click','barrages-hit',e=>{
+    const b=e.features[0].properties;
+    const c=Math.round(curC);
+    const stage=c>700000?'CRITICAL':c>500000?'MAJOR FLOOD':c>350000?'MODERATE':c>200000?'ELEVATED':'NORMAL';
+    const sc=c>700000?'#ef5350':c>500000?'#ff5722':c>350000?'#ffc107':c>200000?'#29b6f6':'#43a047';
+    new maplibregl.Popup({closeButton:true,className:'barrage-popup'})
+      .setLngLat(e.lngLat)
+      .setHTML(`<div style="font-family:'Segoe UI',sans-serif;min-width:180px">
+        <div style="font-weight:700;font-size:13px;color:#90caf9;margin-bottom:6px">${b.name}</div>
+        <div style="font-size:11px;color:#b0bec5;margin-bottom:8px">${b.info}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:#e0e0e0">${c.toLocaleString()} <span style="color:#78909c;font-size:10px">cusecs</span></span>
+          <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:${sc};color:#fff">${stage}</span>
+        </div>
+      </div>`)
+      .addTo(map);
+  });
+});
+
+// ── Collapsible card toggle ───────────────────────────────────────────────
+(function initCards(){
+  const cards=[...document.querySelectorAll('.pb,.rp')];
+  cards.forEach(card=>{
+    const hdr=card.querySelector('.pb-lbl,h3');
+    if(!hdr)return;
+    const body=document.createElement('div');
+    body.className='card-body';
+    let sib=hdr.nextElementSibling;
+    while(sib){const nxt=sib.nextElementSibling;body.appendChild(sib);sib=nxt;}
+    card.appendChild(body);
+    const btn=document.createElement('button');
+    btn.className='ctog';btn.textContent='▾';btn.title='Toggle';
+    btn.onclick=e=>{e.stopPropagation();card.classList.toggle('card-collapsed');updateCollapseBtn();};
+    hdr.style.cssText+='display:flex;justify-content:space-between;align-items:center;';
+    hdr.appendChild(btn);
+  });
+
+  const collapseAllBtn=document.getElementById('collapse-all');
+  function updateCollapseBtn(){
+    const anyOpen=cards.some(c=>!c.classList.contains('card-collapsed'));
+    collapseAllBtn.textContent=anyOpen?'⊟ Collapse All':'⊞ Expand All';
+  }
+  collapseAllBtn.onclick=()=>{
+    const anyOpen=cards.some(c=>!c.classList.contains('card-collapsed'));
+    cards.forEach(c=>c.classList.toggle('card-collapsed',anyOpen));
+    updateCollapseBtn();
+  };
+})();
+</script>
+</body>
+</html>
