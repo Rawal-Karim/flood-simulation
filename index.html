@@ -84,6 +84,50 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 .maplibregl-ctrl-bottom-right{bottom:144px!important}
 .maplibregl-ctrl-bottom-left{bottom:144px!important}
 
+/* ── Info modal ───────────────────────────────────────────────────────────── */
+#info-btn{position:absolute;bottom:194px;right:18px;z-index:25;
+  background:rgba(8,22,50,.92);border:1px solid rgba(41,182,246,.3);
+  border-radius:8px;color:#29b6f6;font-size:15px;width:34px;height:34px;
+  cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;
+  justify-content:center;transition:all .25s;-webkit-tap-highlight-color:transparent;
+  pointer-events:auto;font-weight:700;font-family:'Segoe UI',Arial,sans-serif}
+#info-btn:hover{background:rgba(41,182,246,.18);border-color:rgba(41,182,246,.6)}
+@media(max-width:640px){#info-btn{bottom:122px;right:10px}}
+
+#info-modal{display:none;position:absolute;inset:0;z-index:90;
+  background:rgba(2,8,22,.88);backdrop-filter:blur(12px);
+  overflow-y:auto;padding:28px 20px 40px}
+#info-modal.open{display:block}
+#info-close{position:sticky;top:0;float:right;background:rgba(41,182,246,.15);
+  border:1px solid rgba(41,182,246,.35);border-radius:6px;color:#29b6f6;
+  font-size:16px;width:32px;height:32px;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;margin-bottom:10px;z-index:2;
+  -webkit-tap-highlight-color:transparent}
+#info-modal h1{font-size:15px;font-weight:900;color:#fff;letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:4px;clear:both}
+#info-modal .sub{font-size:8.5px;color:#29b6f6;letter-spacing:2px;
+  text-transform:uppercase;margin-bottom:24px}
+#info-modal h2{font-size:9px;font-weight:800;color:#ffc107;letter-spacing:2.5px;
+  text-transform:uppercase;margin:22px 0 10px;border-bottom:1px solid rgba(255,193,7,.18);
+  padding-bottom:5px}
+#info-modal p{font-size:9.5px;color:rgba(175,210,245,.82);line-height:1.9;margin-bottom:10px}
+#info-modal p b{color:#fff}
+#info-modal .card{background:rgba(8,22,50,.7);border-left:3px solid #29b6f6;
+  padding:10px 14px;margin-bottom:9px;border-radius:0 6px 6px 0}
+#info-modal .card.amber{border-left-color:#ffc107}
+#info-modal .card.green{border-left-color:#43a047}
+#info-modal .card.red{border-left-color:#ef5350}
+#info-modal .card-t{font-size:8px;color:#29b6f6;letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:4px;font-weight:700}
+#info-modal .card.amber .card-t{color:#ffc107}
+#info-modal .card.green .card-t{color:#66bb6a}
+#info-modal .card.red .card-t{color:#ef5350}
+#info-modal .card p{margin:0;font-size:9px;color:rgba(165,200,240,.78)}
+#info-modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#info-modal .src{font-size:8px;color:rgba(100,150,200,.55);margin-top:3px;font-style:italic}
+@media(max-width:480px){#info-modal .row2{grid-template-columns:1fr}
+  #info-modal{padding:20px 14px 40px}}
+
 /* ── Sound toggle button ──────────────────────────────────────────────────── */
 #snd-btn{position:absolute;bottom:152px;right:18px;z-index:25;
   background:rgba(8,22,50,.92);border:1px solid rgba(41,182,246,.3);
@@ -238,6 +282,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 </style>
 </head>
 <body>
+<button id="info-btn" aria-label="About this simulation" title="About this simulation">ℹ</button>
 <button id="snd-btn" aria-label="Toggle sound" title="Toggle sound">🔊</button>
 <button id="mob-left-btn" aria-label="Open control panel">☰</button>
 <button id="mob-right-btn" aria-label="Open data panel">⋮</button>
@@ -326,6 +371,55 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 </div>
 
 <div id="alert">&#9888;&nbsp; FLASH FLOOD SURGE DETECTED — NAI SYSTEM ACTIVATED</div>
+
+<div id="info-modal">
+  <button id="info-close" aria-label="Close">✕</button>
+
+  <h1>NAI Watershed Flood Simulation</h1>
+  <div class="sub">Sindh Irrigation Department · Cluster 4 · Right Bank Indus</div>
+
+  <h2>🎯 What Is This Simulation?</h2>
+  <p>Every monsoon season, heavy rains fall on the <b>Kirthar and Koh-e-Sulaiman mountain ranges</b> to the west of the Indus River in Sindh, Pakistan. Because the mountains are rocky and steep, rainwater cannot soak into the ground — it rushes down dry riverbeds called <b>Nais</b> (hill torrents) at enormous speed.</p>
+  <p>These Nais carry millions of gallons of muddy floodwater across the flat Kohistan plains, filling lakes, straining flood barriers, and threatening villages and farmland before eventually draining into the Indus River.</p>
+  <p>This simulation <b>recreates that journey in 3D</b> — showing how a monsoon storm high in the mountains turns into a flood emergency on the plains below, and how the Sindh Irrigation Department's infrastructure responds to contain it.</p>
+
+  <h2>📅 The Five Phases</h2>
+  <div class="card green"><div class="card-t">1 — Dry Season</div><p>Before the monsoon. All Nais are empty dry riverbeds. Lakes are at low levels. The Indus flows normally at around 95,000 cusecs.</p></div>
+  <div class="card"><div class="card-t">2 — Rain Begins</div><p>Monsoon clouds arrive. Rainfall intensifies over the mountains. The Indus starts rising. You can see and hear the rain building on screen.</p></div>
+  <div class="card amber"><div class="card-t">3 — Surge</div><p>This is the critical phase. One by one the Nais activate and surge with floodwater (shown as muddy brown sheets spreading across the terrain). Lakes begin filling rapidly. The Flood Protection Bund comes under pressure.</p></div>
+  <div class="card red"><div class="card-t">4 — Peak Flood</div><p>All Nais are flowing. Lakes are near capacity. The Indus is carrying over 500,000–635,000 cusecs — more than 6× its normal flow. This matches real data recorded in August–September 2025.</p></div>
+  <div class="card"><div class="card-t">5 — Recession</div><p>Floodwaters slowly drain. Nais go dry again. Lakes gradually return to normal. The cycle resets and repeats.</p></div>
+
+  <h2>📊 Understanding the Chart</h2>
+  <p>The chart at the bottom shows <b>Indus River discharge</b> — the volume of water passing through the river per second, measured in <b>cusecs</b> (cubic feet per second).</p>
+  <div class="row2">
+    <div class="card green"><div class="card-t">Normal Flow</div><p>Below 200,000 cusecs. Safe. No flood risk.</p></div>
+    <div class="card"><div class="card-t">Low Flood</div><p>200,000 – 350,000 cusecs. River is high. Monitoring active.</p></div>
+    <div class="card amber"><div class="card-t">High Flood</div><p>500,000 – 700,000 cusecs. Serious risk. Barrages under stress.</p></div>
+    <div class="card red"><div class="card-t">Super Flood</div><p>Above 900,000 cusecs. Catastrophic. Rare but devastating.</p></div>
+  </div>
+  <p>The two orange/red spike labels on the chart are <b>real recorded peaks</b> from the 2025 monsoon season: <b>543,184 cusecs on 24 August</b> and <b>635,759 cusecs on 14 September</b>.</p>
+
+  <h2>📈 Understanding the Metrics</h2>
+  <div class="card"><div class="card-t">Active Nais</div><p>How many hill torrents are currently carrying floodwater. There are 14 named Nais modelled — when 3 or more activate simultaneously a flash flood alert is triggered.</p></div>
+  <div class="card amber"><div class="card-t">FP Bund Status</div><p>The <b>Flood Protection Bund</b> is a 234 km earthen embankment running along the right bank of the Indus. It is the last line of defence between the floodwater and populated areas. "Under Pressure" means the bund is holding back an active surge.</p></div>
+  <div class="card"><div class="card-t">Lake Fill Levels — Manchar, Hamal, Gaj Dam, Darawai</div><p><b>Manchar Lake</b> is the largest natural freshwater lake in Pakistan. <b>Hamal</b> and <b>Darawai</b> are depression lakes. <b>Gaj Dam</b> is a small storage structure. All four receive runoff from the Nais. Their fill % shows how much of their capacity is currently occupied by floodwater.</p></div>
+  <div class="card green"><div class="card-t">Kotri Barrage (River Tip)</div><p>Kotri Barrage is the southernmost barrage on the Indus. The live reading shows the flow rate passing through it in cusecs — the downstream gateway before the river reaches the Arabian Sea.</p></div>
+
+  <h2>🗺 The Map Layers</h2>
+  <div class="card"><div class="card-t">Blue dashed lines — Hill Torrents (Nais)</div><p>The dry riverbeds of 14 named Nais flowing from the mountains. They turn into rushing floodwater sheets during the surge phase.</p></div>
+  <div class="card"><div class="card-t">Green line — FP Bund</div><p>The 234 km earthen flood protection embankment. Glows orange when under pressure from active surges.</p></div>
+  <div class="card"><div class="card-t">Teal lines — Thatta Division Canals</div><p>The irrigation canal network downstream — K.B. Feeder Upper &amp; Lower, Link Canal, Jam Branch, and 17 minor distributaries — mapped from the Sindh Irrigation Department's 2025 network survey. Visible when you pan south.</p></div>
+  <div class="card"><div class="card-t">Yellow diamonds — Barrages</div><p>Guddu, Sukkur, and Kotri Barrages are concrete structures that regulate Indus flow, divert water into canals, and provide flood data. They glow when the river is in flood stage.</p></div>
+
+  <h2>📂 Data Sources</h2>
+  <div class="card"><div class="card-t">Terrain &amp; Elevation</div><p>NASA SRTM 30-metre digital elevation model via AWS Terrarium tiles. This gives the simulation its real 3D mountain and valley shapes.</p><div class="src">Source: NASA / USGS · Served via Amazon Web Services</div></div>
+  <div class="card"><div class="card-t">Satellite Imagery</div><p>Real satellite photography of Sindh as the base map layer, showing actual farmland, rivers, towns, and geography.</p><div class="src">Source: Google Maps Satellite tiles</div></div>
+  <div class="card"><div class="card-t">Canal Network (Thatta Division)</div><p>Digitised from the Sindh Irrigation Department's official KMZ survey file "Thatta Division Irrigation Network 2025", covering 4 major feeders and 17 minor canals.</p><div class="src">Source: Sindh Irrigation Department · 2025</div></div>
+  <div class="card"><div class="card-t">Flood Peak Data</div><p>The two river discharge peaks shown in the chart (543,184 cusecs on 24 Aug 2025 and 635,759 cusecs on 14 Sep 2025) are real measurements recorded at Sindh barrages during the 2025 monsoon season.</p><div class="src">Source: Sindh Irrigation Department · NDMA flood records · 2025</div></div>
+  <div class="card"><div class="card-t">Nai (Hill Torrent) Paths</div><p>The courses of the 14 hill torrents — Nai Gaj, Nai Nar, Nai Bhan, Nai Aral and others — are traced from satellite imagery and historical flood extent records of the Kohistan plain.</p><div class="src">Source: Remote sensing · SID field survey data</div></div>
+  <div class="card"><div class="card-t">Flood Simulation Model</div><p>The surge timing, flow speeds, and lake fill rates are based on a simplified hydrological model calibrated against observed 2022 and 2025 monsoon flood progression in Cluster 4 of Sindh's right bank.</p><div class="src">Source: Sindh Irrigation Department · Cluster 4 field records</div></div>
+</div>
 
 <div id="intro">
   <h1>NAI Watershed 3D Simulation</h1>
@@ -1392,6 +1486,18 @@ map.on('load',()=>{
     cards.forEach(c=>c.classList.toggle('card-collapsed',anyOpen));
     updateCollapseBtn();
   };
+})();
+
+/* ── Info modal toggle ── */
+(function(){
+  const btn=document.getElementById('info-btn');
+  const modal=document.getElementById('info-modal');
+  const close=document.getElementById('info-close');
+  if(!btn||!modal||!close)return;
+  btn.addEventListener('click',function(){modal.classList.add('open');});
+  close.addEventListener('click',function(){modal.classList.remove('open');});
+  modal.addEventListener('click',function(e){if(e.target===modal)modal.classList.remove('open');});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')modal.classList.remove('open');});
 })();
 
 /* ── Audio Engine ── */
