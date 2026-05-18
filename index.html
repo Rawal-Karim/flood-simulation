@@ -84,6 +84,17 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 .maplibregl-ctrl-bottom-right{bottom:144px!important}
 .maplibregl-ctrl-bottom-left{bottom:144px!important}
 
+/* ── Sound toggle button ──────────────────────────────────────────────────── */
+#snd-btn{position:absolute;bottom:152px;right:18px;z-index:25;
+  background:rgba(8,22,50,.92);border:1px solid rgba(41,182,246,.3);
+  border-radius:8px;color:#29b6f6;font-size:15px;width:34px;height:34px;
+  cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;
+  justify-content:center;transition:all .25s;-webkit-tap-highlight-color:transparent;
+  pointer-events:auto}
+#snd-btn:hover{background:rgba(41,182,246,.18);border-color:rgba(41,182,246,.6)}
+#snd-btn.muted{color:rgba(100,140,180,.45);border-color:rgba(100,140,180,.2)}
+@media(max-width:640px){#snd-btn{bottom:80px;right:10px}}
+
 /* ── Mobile panel toggle buttons ─────────────────────────────────────────── */
 #mob-left-btn,#mob-right-btn{display:none;position:absolute;z-index:25;
   background:rgba(8,22,50,.92);border:1px solid rgba(41,182,246,.3);
@@ -227,6 +238,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 </style>
 </head>
 <body>
+<button id="snd-btn" aria-label="Toggle sound" title="Toggle sound">🔊</button>
 <button id="mob-left-btn" aria-label="Open control panel">☰</button>
 <button id="mob-right-btn" aria-label="Open data panel">⋮</button>
 <div id="panel-overlay"></div>
@@ -1267,6 +1279,11 @@ function drawCanvas(ts){
   const mp=Math.round(WB.manchar.fill*100),hp=Math.round(WB.hamal.fill*100),gp=Math.round(WB.gajdam.fill*100),dp=Math.round(WB.darawai.fill*100);
   [['m',mp],['h',hp],['g',gp],['d',dp]].forEach(([k,v])=>{const gl=document.getElementById('gl-'+k),gf=document.getElementById('gf-'+k);if(gl)gl.textContent=v+'%';if(gf)gf.style.width=v+'%';});
   updLegGlow(aN,bGlow);
+  /* Audio update */
+  if(window.updateAudio){
+    const avgFill=(WB.manchar.fill+WB.hamal.fill+WB.gajdam.fill+WB.darawai.fill)/4;
+    updateAudio(ph.id,pf,aN,avgFill);
+  }
 }
 
 // ─── KEY FIX: bind canvas draw to MapLibre's own render cycle ─────────────
@@ -1375,6 +1392,132 @@ map.on('load',()=>{
     cards.forEach(c=>c.classList.toggle('card-collapsed',anyOpen));
     updateCollapseBtn();
   };
+})();
+
+/* ── Audio Engine ── */
+(function(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return;
+
+  let ctx=null,master=null,
+      rainGain=null,riverGain=null,torrentGain=null,thunderSched=0,
+      enabled=false,ready=false;
+
+  /* ── Create persistent looping noise buffers ─────────────────── */
+  function mkNoise(ac,dur,lo,hi,q){
+    const sr=ac.sampleRate,buf=ac.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const src=ac.createBufferSource();src.buffer=buf;src.loop=true;
+    const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=(lo+hi)/2;bp.Q.value=q||1;
+    const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=hi*1.4;
+    src.connect(bp);bp.connect(lp);
+    const g=ac.createGain();g.gain.value=0;lp.connect(g);
+    src.start(0);
+    return g;
+  }
+
+  function initCtx(){
+    if(ready)return;ready=true;
+    ctx=new AC();
+    master=ctx.createGain();master.gain.value=0.72;master.connect(ctx.destination);
+
+    /* Rain: high-freq broad noise */
+    rainGain=mkNoise(ctx,3,1200,8000,0.4);rainGain.connect(master);
+
+    /* Indus river: low rumble */
+    riverGain=mkNoise(ctx,4,60,400,0.6);riverGain.connect(master);
+
+    /* Torrent rush: mid noise — driven by nai surge */
+    torrentGain=mkNoise(ctx,2,300,2200,0.55);torrentGain.connect(master);
+
+    /* Drip layer: sparse low clicks via separate modulated noise */
+    const drip=mkNoise(ctx,1,800,3000,2.2);drip.connect(master);
+    drip.gain.value=0.012;
+
+    /* River always at subtle ambient level */
+    riverGain.gain.setValueAtTime(0.04,ctx.currentTime);
+  }
+
+  /* ── Thunder: one-shot buffer ─────────────────────────────────── */
+  function playThunder(){
+    if(!ready||!enabled)return;
+    const sr=ctx.sampleRate,dur=2.8,buf=ctx.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
+    // Exponential burst decay
+    for(let i=0;i<d.length;i++){
+      const t=i/sr;
+      const env=Math.exp(-t*2.2)*(1+0.4*Math.sin(t*18+Math.random()*6));
+      d[i]=(Math.random()*2-1)*env;
+    }
+    const src=ctx.createBufferSource();src.buffer=buf;
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;
+    const g=ctx.createGain();g.gain.value=0.55;
+    src.connect(lp);lp.connect(g);g.connect(master);
+    src.start();
+  }
+
+  /* ── Flood alert tone ─────────────────────────────────────────── */
+  let alertPlayed=false;
+  function playAlert(){
+    if(!ready||!enabled||alertPlayed)return;alertPlayed=true;
+    [0,0.38,0.76].forEach(delay=>{
+      const osc=ctx.createOscillator();
+      const g=ctx.createGain();
+      osc.type='sine';osc.frequency.value=880;
+      g.gain.setValueAtTime(0,ctx.currentTime+delay);
+      g.gain.linearRampToValueAtTime(0.18,ctx.currentTime+delay+0.04);
+      g.gain.linearRampToValueAtTime(0,ctx.currentTime+delay+0.22);
+      osc.connect(g);g.connect(master);
+      osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+delay+0.25);
+    });
+  }
+
+  /* ── Per-frame audio update (called from drawCanvas) ─────────── */
+  window.updateAudio=function(ph,pf,activeNais,waterFill){
+    if(!ready||!enabled)return;
+    const now=ctx.currentTime;
+    const storm=['RAIN','SURGE','PEAK'].includes(ph);
+    const surge=ph==='SURGE'||ph==='PEAK';
+    const recess=ph==='RECESS';
+
+    /* Rain intensity */
+    const rTarget=ph==='RAIN'?pf*0.055:storm?0.055:recess?0.018:0;
+    rainGain.gain.setTargetAtTime(rTarget,now,1.2);
+
+    /* Torrent: scales with number of active nais and avg surge */
+    const nFrac=Math.min(activeNais/8,1);
+    const tTarget=surge?(0.04+nFrac*0.18):recess?nFrac*0.06:0;
+    torrentGain.gain.setTargetAtTime(tTarget,now,2.5);
+
+    /* River level: higher when lakes fill */
+    const riv=0.04+waterFill*0.08;
+    riverGain.gain.setTargetAtTime(riv,now,3);
+
+    /* Thunder scheduling during rain/surge */
+    if(storm&&now>thunderSched){
+      const gap=8+Math.random()*18;
+      thunderSched=now+gap;
+      setTimeout(playThunder,gap*1000);
+    }
+
+    /* Alert tone */
+    if(surge&&activeNais>=3)playAlert();
+    if(!surge)alertPlayed=false;
+  };
+
+  /* ── Sound button wiring ─────────────────────────────────────── */
+  const btn=document.getElementById('snd-btn');
+  if(!btn)return;
+  btn.addEventListener('click',function(){
+    if(!ready){initCtx();}
+    if(ctx&&ctx.state==='suspended')ctx.resume();
+    enabled=!enabled;
+    btn.textContent=enabled?'🔊':'🔇';
+    btn.classList.toggle('muted',!enabled);
+    if(!enabled&&ready){
+      /* Silence everything immediately */
+      [rainGain,riverGain,torrentGain].forEach(g=>{if(g)g.gain.setTargetAtTime(0,ctx.currentTime,0.3);});
+    }
+  });
 })();
 
 /* ── Mobile panel toggles ── */
