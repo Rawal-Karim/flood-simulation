@@ -1552,47 +1552,20 @@ map.on('load',()=>{
   };
 })();
 
-/* ── Audio Guide (Web Speech API) ── */
+/* ── Audio Guide (MP3 — Urdu narration) ── */
 (function(){
-  if(!window.speechSynthesis)return;
-  const synth=window.speechSynthesis;
-
   const SEGMENTS=[
-    {
-      label:'مقصد',
-      text:'محکمہ آبپاشی سندھ نو موسمی پہاڑی نالوں کا انتظام کرتا ہے — جنہیں نائی کہا جاتا ہے — جو ہر مون سون میں کرتھر پہاڑوں سے سندھ کے دائیں کنارے پر امڈ آتے ہیں اور جھیلوں، دو سو چونتیس کلومیٹر طویل مٹی کے سیلابی بند، اور چار اضلاع کو خطرے میں ڈالتے ہیں۔ یہ سمیولیشن اس خطرے کو آنکھوں کے سامنے لانے کے لیے بنائی گئی ہے — رپورٹ کے اعداد و شمار کی صورت میں نہیں، بلکہ ایک حقیقی نقشے پر حقیقی وقت میں گھٹتے بڑھتے مناظر کی شکل میں۔'
-    },
-    {
-      label:'ڈیٹا کے ذرائع',
-      text:'ڈیٹا سرکاری ذرائع پر مبنی ہے۔ خطہ زمین ناسا کے سیٹلائٹ بلندی کے اعداد و شمار سے لیا گیا ہے۔ نو نائیوں کے راستے محکمہ آبپاشی سندھ کے سرکاری ہل ٹورنٹ واٹرشیڈ نقشے سے تصدیق شدہ ہیں۔ چارٹ پر دکھائی دینے والی دو سیلابی چوٹیاں حقیقی ریکارڈ شدہ پیمائشیں ہیں: چوبیس اگست کو پانچ لاکھ تریتالیس ہزار کیوسک، اور چودہ ستمبر دو ہزار پچیس کو چھ لاکھ پینتیس ہزار کیوسک۔ ٹھٹہ ڈویژن کا نہری نیٹ ورک ایس آئی ڈی کے دو ہزار پچیس کے سروے سے لیا گیا ہے۔'
-    },
-    {
-      label:'نقشہ',
-      text:'آپ سندھ کے کلسٹر چار کو تھری ڈی میں دیکھ رہے ہیں۔ مغرب میں کرتھر پہاڑ بلند ہیں۔ دریائے سندھ شمال سے جنوب کی طرف دائیں جانب بہتا ہے۔ ان کے درمیان چپٹا کوہستانی میدان ہے — وہ زمین جسے یہ نو پہاڑی نالے ہر مون سون میں غرق کرتے ہیں۔ سیلابی دور مسلسل چلتا رہتا ہے: خشکی، بارش، طغیانی، عروج، اور کمی۔'
-    },
-    {
-      label:'بائیں پینل',
-      text:'اوپر بائیں پینل آپ کا مرکزِ نظر ہے۔ یہ موجودہ سیلابی مرحلہ اور اس کی پیش رفت دکھاتا ہے۔ نیچے تین براہِ راست اعداد و شمار ہیں: نو میں سے کتنی نائیاں اس وقت بہہ رہی ہیں، سیلابی بند دباؤ میں ہے یا محفوظ ہے، اور کوٹری بیراج پر دریائے سندھ کا بہاؤ۔ نیچے چار بھرنے والی پٹیاں ہامل جھیل، منچھر جھیل، نائی گاج ڈیم، اور داراوائی ڈیم کو سیلابی پانی سے بھرتے ہوئے دکھاتی ہیں۔'
-    },
-    {
-      label:'دائیں پینل',
-      text:'اوپر دائیں پینل نقشے پر موجود ہر عنصر کی شناخت کرتا ہے۔ نیلی ٹوٹی لکیریں نو خشک نائیوں کے دریائی راستے ہیں۔ سبز لکیر دو سو چونتیس کلومیٹر طویل سیلابی بند ہے۔ سیروی لکیریں ٹھٹہ ڈویژن کی آبپاشی نہریں ہیں۔ پیلے ہیرے تین بیراجوں کو ظاہر کرتے ہیں — گدو، سکھر، اور کوٹری۔ سیلابی محاذ آگے بڑھنے کے ساتھ ضلعی ٹریکر روشن ہوتا ہے — پہلے لاڑکانہ، پھر قمبر شہداد کوٹ، دادو، اور جامشورو۔'
-    },
-    {
-      label:'چارٹ',
-      text:'نیچے چارٹ مون سون کے موسم میں دریائے سندھ کا بہاؤ کیوسک میں ٹریک کرتا ہے — کیوسک یعنی فی سیکنڈ کیوبک فٹ پانی۔ رنگین پٹیاں سرکاری سیلابی مراحل کو عام سے سپر فلڈ تک ظاہر کرتی ہیں۔ دو نشان زد چوٹیاں حقیقی ہیں: چوبیس اگست اور چودہ ستمبر دو ہزار پچیس۔ اس حجم پر دریائے سندھ منچھر جھیل کا اضافی پانی قبول کرنے سے قاصر ہو جاتا ہے۔ پانی کے پاس جانے کی کوئی جگہ نہیں رہتی۔'
-    },
-    {
-      label:'طغیانی کا منظر',
-      text:'جیسے ہی طغیانی کا مرحلہ شروع ہوتا ہے، نائیوں کو شمال سے جنوب کی طرف ایک ایک کر کے سرگرم ہوتے دیکھیں — نائی نائیگ، پھر بھان، پاکھو، ڈگڈو، کھیدرو، پھر سب سے بڑی نائی گاج، اس کے بعد رانجو، چاندیو، اور آخر میں جامشورو کے قریب نائی بارن۔ دیکھیں کہ پانی کسی نہر میں نہیں رہتا — یہ ہر سمت زمین پر پھیلتا چلا جاتا ہے۔ یہی سطحی بہاؤ ہے — اور یہی طریقہ ہے جس سے پانی ہموار زمین پر درحقیقت چلتا ہے۔'
-    },
-    {
-      label:'اہمیت',
-      text:'سیلابی بند کو دباؤ بڑھنے کے ساتھ نارنجی رنگ میں چمکتے دیکھیں۔ جھیلوں کو بھرتے دیکھیں۔ دریائے سندھ کو سیلابی مراحل سے گزرتے دیکھیں۔ دو ہزار بائیس میں اگست کی بارش اوسط سے سات سو چھبیس فیصد زیادہ تھی۔ دو ہزار پچیس میں دریائے سندھ تین ہفتوں کے اندر دو بار عروج پر پہنچا۔ بند، بیراج، جھیلیں — یہ سیلاب کو سست کرتے ہیں، روکتے نہیں۔ یہی وہ چیلنج ہے جسے محکمہ آبپاشی سندھ ہر سال سنبھالتا ہے۔'
-    }
+    {label:'مقصد',       src:'audio/seg1.mp3'},
+    {label:'ڈیٹا کے ذرائع', src:'audio/seg2.mp3'},
+    {label:'نقشہ',       src:'audio/seg3.mp3'},
+    {label:'بائیں پینل', src:'audio/seg4.mp3'},
+    {label:'دائیں پینل', src:'audio/seg5.mp3'},
+    {label:'چارٹ',       src:'audio/seg6.mp3'},
+    {label:'طغیانی کا منظر', src:'audio/seg7.mp3'},
+    {label:'اہمیت',      src:'audio/seg8.mp3'}
   ];
 
-  let cur=0,playing=false,progTimer=null,progStart=0,progDur=0;
+  let cur=0,playing=false,progTimer=null;
 
   const btn    =document.getElementById('aud-btn');
   const player =document.getElementById('aud-player');
@@ -1604,78 +1577,83 @@ map.on('load',()=>{
   const nextBtn=document.getElementById('aud-next');
   const countEl=document.getElementById('aud-seg-count');
 
+  // Single reusable Audio element
+  const audio=new Audio();
+  audio.preload='none';
+
   function render(){
     const s=SEGMENTS[cur];
     segLbl.textContent=s.label;
-    segTxt.textContent=s.text;
+    segTxt.textContent='';          // no text body needed — audio speaks
     countEl.textContent=(cur+1)+' / '+SEGMENTS.length;
     prevBtn.disabled=cur===0;
     nextBtn.disabled=cur===SEGMENTS.length-1;
-    progFil.style.width='0%';
+    if(!playing)progFil.style.width='0%';
     playBtn.textContent=playing?'⏸ روکیں':'▶ چلائیں';
     btn.classList.toggle('playing',playing);
   }
 
-  function estimateDuration(text){
-    // ~140 words per minute for a clear narration pace
-    return(text.split(' ').length/140)*60*1000;
-  }
-
-  function startProgress(dur){
+  function startProgress(){
     clearInterval(progTimer);
-    progStart=Date.now();progDur=dur;
     progTimer=setInterval(function(){
-      const pct=Math.min((Date.now()-progStart)/progDur*100,100);
-      progFil.style.width=pct+'%';
-      if(pct>=100)clearInterval(progTimer);
-    },120);
-  }
-
-  function speak(){
-    synth.cancel();
-    clearInterval(progTimer);
-    const utt=new SpeechSynthesisUtterance(SEGMENTS[cur].text);
-    utt.lang='ur-PK';
-    utt.rate=0.85;utt.pitch=1.0;utt.volume=1.0;
-
-    // Prefer an Urdu voice; fall back to any available voice
-    const voices=synth.getVoices();
-    const preferred=voices.find(v=>/ur[-_]PK/i.test(v.lang))
-      ||voices.find(v=>/ur/i.test(v.lang));
-    if(preferred)utt.voice=preferred;
-
-    utt.onstart=function(){
-      playing=true;
-      startProgress(estimateDuration(SEGMENTS[cur].text));
-      render();
-    };
-    utt.onend=function(){
-      clearInterval(progTimer);
-      progFil.style.width='100%';
-      if(cur<SEGMENTS.length-1){
-        cur++;setTimeout(speak,600);
-      } else {
-        playing=false;render();
+      if(audio.duration&&isFinite(audio.duration)){
+        const pct=(audio.currentTime/audio.duration)*100;
+        progFil.style.width=pct+'%';
       }
-    };
-    utt.onerror=function(){playing=false;render();};
-    synth.speak(utt);
+    },200);
   }
+
+  function loadAndPlay(){
+    audio.src=SEGMENTS[cur].src;
+    audio.load();
+    audio.play().then(function(){
+      playing=true;
+      startProgress();
+      render();
+    }).catch(function(){
+      playing=false;render();
+    });
+  }
+
+  audio.addEventListener('ended',function(){
+    clearInterval(progTimer);
+    progFil.style.width='100%';
+    if(cur<SEGMENTS.length-1){
+      cur++;
+      setTimeout(loadAndPlay,500);
+    } else {
+      playing=false;render();
+    }
+  });
+
+  audio.addEventListener('error',function(){
+    clearInterval(progTimer);
+    playing=false;render();
+  });
 
   function pause(){
-    if(synth.speaking){synth.pause();clearInterval(progTimer);}
+    audio.pause();
+    clearInterval(progTimer);
     playing=false;render();
   }
+
   function resume(){
-    if(synth.paused){synth.resume();startProgress(progDur-(Date.now()-progStart));}
-    else speak();
-    playing=true;render();
+    if(audio.src&&audio.paused&&audio.currentTime>0){
+      audio.play().then(function(){
+        playing=true;startProgress();render();
+      });
+    } else {
+      loadAndPlay();
+    }
   }
 
   btn.addEventListener('click',function(){
     player.classList.toggle('open');
-    if(!player.classList.contains('open')){synth.cancel();playing=false;render();}
-    else render();
+    if(!player.classList.contains('open')){
+      audio.pause();audio.currentTime=0;
+      clearInterval(progTimer);playing=false;
+    }
+    render();
   });
 
   playBtn.addEventListener('click',function(){
@@ -1683,21 +1661,20 @@ map.on('load',()=>{
   });
 
   prevBtn.addEventListener('click',function(){
-    synth.cancel();clearInterval(progTimer);
+    audio.pause();audio.currentTime=0;
+    clearInterval(progTimer);
     cur=Math.max(cur-1,0);playing=false;render();
   });
 
   nextBtn.addEventListener('click',function(){
-    synth.cancel();clearInterval(progTimer);
+    audio.pause();audio.currentTime=0;
+    clearInterval(progTimer);
     cur=Math.min(cur+1,SEGMENTS.length-1);playing=false;render();
   });
 
-  // Voices may load async on some browsers
-  if(synth.onvoiceschanged!==undefined)synth.onvoiceschanged=render;
-
-  // Stop on page hide (mobile background tab)
+  // Pause when tab goes to background (mobile battery / iOS)
   document.addEventListener('visibilitychange',function(){
-    if(document.hidden&&playing){pause();}
+    if(document.hidden&&playing)pause();
   });
 
   render();
