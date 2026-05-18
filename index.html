@@ -1400,123 +1400,135 @@ map.on('load',()=>{
   if(!AC)return;
 
   let ctx=null,master=null,
-      rainGain=null,riverGain=null,torrentGain=null,thunderSched=0,
-      enabled=false,ready=false;
+      rainGain=null,riverGain=null,torrentGain=null,
+      thunderSched=0,enabled=false,booted=false;
 
-  /* ── Create persistent looping noise buffers ─────────────────── */
-  function mkNoise(ac,dur,lo,hi,q){
-    const sr=ac.sampleRate,buf=ac.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
+  /* ── Build noise layer AFTER context is confirmed running ──────── */
+  function mkNoise(dur,lo,hi,q){
+    const sr=ctx.sampleRate,buf=ctx.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
     for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ac.createBufferSource();src.buffer=buf;src.loop=true;
-    const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=(lo+hi)/2;bp.Q.value=q||1;
-    const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=hi*1.4;
-    src.connect(bp);bp.connect(lp);
-    const g=ac.createGain();g.gain.value=0;lp.connect(g);
+    const src=ctx.createBufferSource();src.buffer=buf;src.loop=true;
+    const bp=ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=(lo+hi)/2;bp.Q.value=q||1;
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=hi*1.5;
+    const g=ctx.createGain();g.gain.value=0;
+    src.connect(bp);bp.connect(lp);lp.connect(g);g.connect(master);
     src.start(0);
     return g;
   }
 
-  function initCtx(){
-    if(ready)return;ready=true;
-    ctx=new AC();
-    master=ctx.createGain();master.gain.value=0.72;master.connect(ctx.destination);
-
-    /* Rain: high-freq broad noise */
-    rainGain=mkNoise(ctx,3,1200,8000,0.4);rainGain.connect(master);
-
-    /* Indus river: low rumble */
-    riverGain=mkNoise(ctx,4,60,400,0.6);riverGain.connect(master);
-
-    /* Torrent rush: mid noise — driven by nai surge */
-    torrentGain=mkNoise(ctx,2,300,2200,0.55);torrentGain.connect(master);
-
-    /* Drip layer: sparse low clicks via separate modulated noise */
-    const drip=mkNoise(ctx,1,800,3000,2.2);drip.connect(master);
-    drip.gain.value=0.012;
-
-    /* River always at subtle ambient level */
-    riverGain.gain.setValueAtTime(0.04,ctx.currentTime);
+  function buildGraph(){
+    rainGain    = mkNoise(3,1200,8000,0.4);
+    riverGain   = mkNoise(4,60,400,0.6);
+    torrentGain = mkNoise(2,300,2200,0.55);
+    const drip  = mkNoise(1,800,3000,2.2);
+    drip.gain.value=0.012;            // always-on subtle drip
+    riverGain.gain.value=0.04;        // always-on river ambient
   }
 
-  /* ── Thunder: one-shot buffer ─────────────────────────────────── */
+  /* ── Boot: create context + resume (iOS-safe) ─────────────────── */
+  function boot(){
+    return new Promise(function(resolve){
+      if(booted){resolve();return;}
+      booted=true;
+      ctx=new AC();
+      master=ctx.createGain();master.gain.value=0.72;master.connect(ctx.destination);
+      /* iOS Safari: context starts suspended — must resume in gesture */
+      function go(){buildGraph();resolve();}
+      if(ctx.state==='running'){go();}
+      else{ctx.resume().then(go).catch(go);}
+    });
+  }
+
+  /* ── Thunder: one-shot low-freq burst ─────────────────────────── */
   function playThunder(){
-    if(!ready||!enabled)return;
+    if(!ctx||!enabled||ctx.state!=='running')return;
     const sr=ctx.sampleRate,dur=2.8,buf=ctx.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
-    // Exponential burst decay
     for(let i=0;i<d.length;i++){
-      const t=i/sr;
-      const env=Math.exp(-t*2.2)*(1+0.4*Math.sin(t*18+Math.random()*6));
+      const t=i/sr,env=Math.exp(-t*2.2)*(1+0.4*Math.sin(t*18+Math.random()*6));
       d[i]=(Math.random()*2-1)*env;
     }
     const src=ctx.createBufferSource();src.buffer=buf;
-    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;
-    const g=ctx.createGain();g.gain.value=0.55;
-    src.connect(lp);lp.connect(g);g.connect(master);
-    src.start();
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=300;
+    const g=ctx.createGain();g.gain.value=0.5;
+    src.connect(lp);lp.connect(g);g.connect(master);src.start();
   }
 
-  /* ── Flood alert tone ─────────────────────────────────────────── */
+  /* ── Alert: triple beep ───────────────────────────────────────── */
   let alertPlayed=false;
   function playAlert(){
-    if(!ready||!enabled||alertPlayed)return;alertPlayed=true;
-    [0,0.38,0.76].forEach(delay=>{
-      const osc=ctx.createOscillator();
-      const g=ctx.createGain();
+    if(!ctx||!enabled||alertPlayed||ctx.state!=='running')return;
+    alertPlayed=true;
+    [0,0.38,0.76].forEach(function(delay){
+      const osc=ctx.createOscillator(),g=ctx.createGain();
       osc.type='sine';osc.frequency.value=880;
       g.gain.setValueAtTime(0,ctx.currentTime+delay);
       g.gain.linearRampToValueAtTime(0.18,ctx.currentTime+delay+0.04);
       g.gain.linearRampToValueAtTime(0,ctx.currentTime+delay+0.22);
       osc.connect(g);g.connect(master);
-      osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+delay+0.25);
+      osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+delay+0.26);
     });
   }
 
-  /* ── Per-frame audio update (called from drawCanvas) ─────────── */
+  /* ── Per-frame update ─────────────────────────────────────────── */
   window.updateAudio=function(ph,pf,activeNais,waterFill){
-    if(!ready||!enabled)return;
+    if(!ctx||!enabled||ctx.state!=='running')return;
     const now=ctx.currentTime;
     const storm=['RAIN','SURGE','PEAK'].includes(ph);
     const surge=ph==='SURGE'||ph==='PEAK';
     const recess=ph==='RECESS';
 
-    /* Rain intensity */
-    const rTarget=ph==='RAIN'?pf*0.055:storm?0.055:recess?0.018:0;
-    rainGain.gain.setTargetAtTime(rTarget,now,1.2);
+    rainGain.gain.setTargetAtTime(
+      ph==='RAIN'?pf*0.055:storm?0.055:recess?0.018:0, now,1.2);
 
-    /* Torrent: scales with number of active nais and avg surge */
     const nFrac=Math.min(activeNais/8,1);
-    const tTarget=surge?(0.04+nFrac*0.18):recess?nFrac*0.06:0;
-    torrentGain.gain.setTargetAtTime(tTarget,now,2.5);
+    torrentGain.gain.setTargetAtTime(
+      surge?(0.04+nFrac*0.18):recess?nFrac*0.06:0, now,2.5);
 
-    /* River level: higher when lakes fill */
-    const riv=0.04+waterFill*0.08;
-    riverGain.gain.setTargetAtTime(riv,now,3);
+    riverGain.gain.setTargetAtTime(0.04+waterFill*0.08, now,3);
 
-    /* Thunder scheduling during rain/surge */
     if(storm&&now>thunderSched){
-      const gap=8+Math.random()*18;
-      thunderSched=now+gap;
+      const gap=8+Math.random()*18;thunderSched=now+gap;
       setTimeout(playThunder,gap*1000);
     }
-
-    /* Alert tone */
     if(surge&&activeNais>=3)playAlert();
     if(!surge)alertPlayed=false;
   };
 
-  /* ── Sound button wiring ─────────────────────────────────────── */
+  /* ── Button: tap to enable (required by iOS) ──────────────────── */
   const btn=document.getElementById('snd-btn');
   if(!btn)return;
-  btn.addEventListener('click',function(){
-    if(!ready){initCtx();}
-    if(ctx&&ctx.state==='suspended')ctx.resume();
-    enabled=!enabled;
+
+  function setUI(){
     btn.textContent=enabled?'🔊':'🔇';
     btn.classList.toggle('muted',!enabled);
-    if(!enabled&&ready){
-      /* Silence everything immediately */
-      [rainGain,riverGain,torrentGain].forEach(g=>{if(g)g.gain.setTargetAtTime(0,ctx.currentTime,0.3);});
+  }
+
+  btn.addEventListener('click',function(){
+    boot().then(function(){
+      /* After boot, context must still be explicitly resumed on some iOS builds */
+      if(ctx.state==='suspended'){
+        ctx.resume().then(toggle);
+      } else {
+        toggle();
+      }
+    });
+  });
+
+  function toggle(){
+    enabled=!enabled;
+    setUI();
+    if(!enabled){
+      [rainGain,riverGain,torrentGain].forEach(function(g){
+        if(g)g.gain.setTargetAtTime(0,ctx.currentTime,0.3);
+      });
+      /* Restore always-on drip & river after a moment */
+      setTimeout(function(){if(!enabled&&riverGain)riverGain.gain.setTargetAtTime(0,ctx.currentTime,0.1);},400);
     }
+  }
+
+  /* ── iOS background-tab resume: re-unlock on next visible tap ─── */
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden&&ctx&&ctx.state==='suspended'&&enabled)ctx.resume();
   });
 })();
 
