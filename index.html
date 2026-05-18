@@ -401,13 +401,13 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
   <p>The two orange/red spike labels on the chart are <b>real recorded peaks</b> from the 2025 monsoon season: <b>543,184 cusecs on 24 August</b> and <b>635,759 cusecs on 14 September</b>.</p>
 
   <h2>📈 Understanding the Metrics</h2>
-  <div class="card"><div class="card-t">Active Nais</div><p>How many hill torrents are currently carrying floodwater. There are 14 named Nais modelled — when 3 or more activate simultaneously a flash flood alert is triggered.</p></div>
+  <div class="card"><div class="card-t">Active Nais</div><p>How many hill torrents are currently carrying floodwater. There are 9 confirmed Nais modelled — Nai Naig, Nai Bhan, Nai Pakho, Nai Dugdu, Nai Khedro, Nai Gaj, Nai Ranjo, Nai Chandio, and Nai Baran. When 3 or more activate simultaneously a flash flood alert is triggered.</p></div>
   <div class="card amber"><div class="card-t">FP Bund Status</div><p>The <b>Flood Protection Bund</b> is a 234 km earthen embankment running along the right bank of the Indus. It is the last line of defence between the floodwater and populated areas. "Under Pressure" means the bund is holding back an active surge.</p></div>
   <div class="card"><div class="card-t">Lake Fill Levels — Manchar, Hamal, Gaj Dam, Darawai</div><p><b>Manchar Lake</b> is the largest natural freshwater lake in Pakistan. <b>Hamal</b> and <b>Darawai</b> are depression lakes. <b>Gaj Dam</b> is a small storage structure. All four receive runoff from the Nais. Their fill % shows how much of their capacity is currently occupied by floodwater.</p></div>
   <div class="card green"><div class="card-t">Kotri Barrage (River Tip)</div><p>Kotri Barrage is the southernmost barrage on the Indus. The live reading shows the flow rate passing through it in cusecs — the downstream gateway before the river reaches the Arabian Sea.</p></div>
 
   <h2>🗺 The Map Layers</h2>
-  <div class="card"><div class="card-t">Blue dashed lines — Hill Torrents (Nais)</div><p>The dry riverbeds of 14 named Nais flowing from the mountains. They turn into rushing floodwater sheets during the surge phase.</p></div>
+  <div class="card"><div class="card-t">Blue dashed lines — Hill Torrents (Nais)</div><p>The dry riverbeds of 9 confirmed Nais flowing from the Kirthar Mountains. They turn into rushing floodwater sheets during the surge phase.</p></div>
   <div class="card"><div class="card-t">Green line — FP Bund</div><p>The 234 km earthen flood protection embankment. Glows orange when under pressure from active surges.</p></div>
   <div class="card"><div class="card-t">Teal lines — Thatta Division Canals</div><p>The irrigation canal network downstream — K.B. Feeder Upper &amp; Lower, Link Canal, Jam Branch, and 17 minor distributaries — mapped from the Sindh Irrigation Department's 2025 network survey. Visible when you pan south.</p></div>
   <div class="card"><div class="card-t">Yellow diamonds — Barrages</div><p>Guddu, Sukkur, and Kotri Barrages are concrete structures that regulate Indus flow, divert water into canals, and provide flood data. They glow when the river is in flood stage.</p></div>
@@ -417,7 +417,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
   <div class="card"><div class="card-t">Satellite Imagery</div><p>Real satellite photography of Sindh as the base map layer, showing actual farmland, rivers, towns, and geography.</p><div class="src">Source: Google Maps Satellite tiles</div></div>
   <div class="card"><div class="card-t">Canal Network (Thatta Division)</div><p>Digitised from the Sindh Irrigation Department's official KMZ survey file "Thatta Division Irrigation Network 2025", covering 4 major feeders and 17 minor canals.</p><div class="src">Source: Sindh Irrigation Department · 2025</div></div>
   <div class="card"><div class="card-t">Flood Peak Data</div><p>The two river discharge peaks shown in the chart (543,184 cusecs on 24 Aug 2025 and 635,759 cusecs on 14 Sep 2025) are real measurements recorded at Sindh barrages during the 2025 monsoon season.</p><div class="src">Source: Sindh Irrigation Department · NDMA flood records · 2025</div></div>
-  <div class="card"><div class="card-t">Nai (Hill Torrent) Paths</div><p>The courses of the 14 hill torrents — Nai Gaj, Nai Nar, Nai Bhan, Nai Aral and others — are traced from satellite imagery and historical flood extent records of the Kohistan plain.</p><div class="src">Source: Remote sensing · SID field survey data</div></div>
+  <div class="card"><div class="card-t">Nai (Hill Torrent) Paths</div><p>The 9 Nais — Nai Naig, Nai Bhan, Nai Pakho, Nai Dugdu, Nai Khedro, Nai Gaj, Nai Ranjo, Nai Chandio, and Nai Baran — are confirmed from the Sindh Irrigation Department's official Hill Torrent Watershed map. Their catchment boundaries are largely ungauged, as noted in official Cluster 4 reports.</p><div class="src">Source: SID Hill Torrent (Nai) Watersheds Map · Cluster 4 field records</div></div>
   <div class="card"><div class="card-t">Flood Simulation Model</div><p>The surge timing, flow speeds, and lake fill rates are based on a simplified hydrological model calibrated against observed 2022 and 2025 monsoon flood progression in Cluster 4 of Sindh's right bank.</p><div class="src">Source: Sindh Irrigation Department · Cluster 4 field records</div></div>
 </div>
 
@@ -487,18 +487,8 @@ function mToPx(m,lat){const z=map.getZoom();return m/(156543.03*Math.cos(lat*Mat
 // origin:'kirthar' = Kirthar range (west, flows E across the right bank)
 // size:'major'|'medium'|'minor' drives dry-bed line width
 const NAIS=[
-  // ── KOH-E-SULAIMAN GROUP — originate north lat 27.8–28.5°N, flow SSE ────
-  {name:'Nai Nar',    origin:'koh',size:'medium',
-   pts:[[67.05,28.48],[67.18,28.30],[67.32,28.10],[67.45,27.90],[67.55,27.70],[67.63,27.52]],
-   to:'hamal',delay:-1.2,spd:.10},
-  {name:'Nai Muhar',  origin:'koh',size:'medium',
-   pts:[[66.98,28.20],[67.12,28.02],[67.26,27.85],[67.40,27.68],[67.55,27.58],[67.63,27.48]],
-   to:'hamal',delay:-0.6,spd:.10},
-  {name:'Nai Kadhan', origin:'koh',size:'medium',
-   pts:[[66.95,27.90],[67.10,27.78],[67.26,27.68],[67.42,27.60],[67.58,27.52],[67.63,27.47]],
-   to:'hamal',delay:-0.2,spd:.11},
-
-  // ── KIRTHAR RANGE GROUP — originate west lon ~66.82–66.92°E, flow E ─────
+  // ── KIRTHAR RANGE GROUP — confirmed from SID map · flow E/SE ─────────────
+  // Source: Hill Torrent (Nai) Watersheds map · Sindh Irrigation Department
   {name:'Nai Naig',   origin:'kirthar',size:'medium',
    pts:[[66.92,27.65],[67.22,27.58],[67.45,27.52],[67.62,27.45]],
    to:'hamal',delay:0,spd:.11},
@@ -596,9 +586,6 @@ const KOHISTAN_WATERSHED=[
 // the reference map. Northern nais (high latitude) → Larkana/Qambar;
 // central nais → Dadu; southern nais → Jamshoro; Nai Baran also hits Karachi.
 const NAI_DISTRICTS={
-  'Nai Nar':     ['la'],
-  'Nai Muhar':   ['la','qa'],
-  'Nai Kadhan':  ['la','qa'],
   'Nai Naig':    ['la','qa'],
   'Nai Bhan':    ['la','qa'],
   'Nai Pakho':   ['qa','da'],
@@ -857,26 +844,14 @@ function loadMapLayers(){
   map.addLayer({id:'barrages-hit',type:'circle',source:'barrages-src',
     paint:{'circle-radius':22,'circle-opacity':0,'circle-stroke-width':0}});
 
-  // ── Nai dry-bed guides — split by origin for visual distinction ─────────
+  // ── Nai dry-bed guides — all 9 confirmed Kirthar Nais ───────────────────
   const naiFeatures=NAIS.map(n=>({type:'Feature',
-    properties:{name:n.name,origin:n.origin,size:n.size},
+    properties:{name:n.name,size:n.size},
     geometry:{type:'LineString',coordinates:n.pts}}));
 
-  // Kirthar group — short dashes, cool blue, flows horizontally W→E
-  const kohFeatures   =naiFeatures.filter(f=>f.properties.origin==='koh');
-  const kirtharFeatures=naiFeatures.filter(f=>f.properties.origin==='kirthar');
+  map.addSource('nai-kirthar-src',{type:'geojson',data:{type:'FeatureCollection',features:naiFeatures}});
 
-  map.addSource('nai-koh-src',    {type:'geojson',data:{type:'FeatureCollection',features:kohFeatures}});
-  map.addSource('nai-kirthar-src',{type:'geojson',data:{type:'FeatureCollection',features:kirtharFeatures}});
-
-  // Koh-e-Sulaiman beds — longer dashes, slightly warmer tone, diagonal paths
-  map.addLayer({id:'nai-beds-koh',type:'line',source:'nai-koh-src',
-    layout:{'line-cap':'round'},
-    paint:{'line-color':'rgba(180,195,240,0.52)',
-           'line-width':['match',['get','size'],'major',2.0,1.5],
-           'line-dasharray':[9,7]}});
-
-  // Kirthar beds — tighter dashes, classic blue
+  // Kirthar Nai beds — dashed blue, major Nais slightly wider
   map.addLayer({id:'nai-beds-kirthar',type:'line',source:'nai-kirthar-src',
     layout:{'line-cap':'round'},
     paint:{'line-color':'rgba(130,205,245,0.42)',
@@ -1163,28 +1138,24 @@ function drawNai(n,ts){
   // Shows once the surge is visible — pinned to the first pts coordinate
   if(n.surge>0.12){
     const src=sp[0];
-    const isKoh=n.origin==='koh';
     const srcAlpha=Math.min(n.surge*3,1);
     ctx.save();ctx.globalAlpha=srcAlpha;
     const lbl=n.name;
     ctx.font='600 8px Segoe UI';
     const tw=ctx.measureText(lbl).width;
     const px=src[0], py=src[1];
-    // Pill background
-    const bgCol=isKoh?'rgba(60,40,110,0.82)':'rgba(18,42,80,0.82)';
-    const bdCol=isKoh?'rgba(180,160,255,0.60)':'rgba(100,185,245,0.55)';
-    ctx.fillStyle=bgCol;
+    // Pill background — all Kirthar Nais, consistent blue style
+    ctx.fillStyle='rgba(18,42,80,0.82)';
     roundRect(ctx,px-tw/2-5,py-13,tw+10,15,3);ctx.fill();
-    ctx.strokeStyle=bdCol;ctx.lineWidth=0.8;
+    ctx.strokeStyle='rgba(100,185,245,0.55)';ctx.lineWidth=0.8;
     roundRect(ctx,px-tw/2-5,py-13,tw+10,15,3);ctx.stroke();
     // Range tag above the pill
-    const tag=isKoh?'KSR':'KTR';
     ctx.font='500 6px Segoe UI';
-    const tagW=ctx.measureText(tag).width;
-    ctx.fillStyle=isKoh?'rgba(80,55,130,0.78)':'rgba(15,35,65,0.78)';
+    const tagW=ctx.measureText('KTR').width;
+    ctx.fillStyle='rgba(15,35,65,0.78)';
     roundRect(ctx,px-tagW/2-3,py-22,tagW+6,9,2);ctx.fill();
-    ctx.fillStyle=isKoh?'rgba(200,185,255,0.90)':'rgba(140,210,255,0.90)';
-    ctx.textAlign='center';ctx.fillText(tag,px,py-15);
+    ctx.fillStyle='rgba(140,210,255,0.90)';
+    ctx.textAlign='center';ctx.fillText('KTR',px,py-15);
     // Nai name
     ctx.font='600 8px Segoe UI';
     ctx.fillStyle=isKoh?'rgba(210,200,255,0.95)':'rgba(160,225,255,0.95)';
