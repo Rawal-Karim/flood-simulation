@@ -1581,133 +1581,193 @@ map.on('load',()=>{
      src:'audio/seg8.mp3'}
   ];
 
-  /* ── Camera choreography — smooth flyovers, 2D/3D mix ──────────────── */
-  // Durations: seg1=33.5s seg2=39.1s seg3=25.2s seg4=28.3s
-  //            seg5=34.4s seg6=34.8s seg7=34.8s seg8=30.5s
-  //
-  // 2D (pitch  0-12°) — top-down map feel: Nai paths, canals, bund, barrages
-  // 3D (pitch 30-48°) — terrain, mountains, surge, wide landscape
-  // easeTo  — smooth linear, used for almost everything
-  // flyTo   — cinematic arc, max 2x per segment, slow speed 0.45-0.52
-  // Zoom range: 6.5-8.8 (no extremes)
+  /* ── Camera choreography — slow, north-up, 2D/3D mix ───────────────── */
+  // Rules:
+  //   bearing kept at 0 (north-up) on all moves — no map rotation
+  //   easeTo duration 5000-6500ms — slow enough to read
+  //   flyTo speed 0.30-0.38 — gentle arc, not jarring
+  //   2D (pitch  0-10°) for map elements: Nai paths, canals, bund, barrages
+  //   3D (pitch 32-48°) for terrain, mountains, surge, wide landscape
 
-  const CAM_DEFAULT={center:[67.35,26.50],zoom:7.2,pitch:48,bearing:-5,duration:3500};
+  const CAM_DEFAULT={center:[67.35,26.50],zoom:7.2,pitch:48,bearing:0,duration:5000};
 
   function camMove(opts){
     if(opts.fly){
       var o=Object.assign({},opts);
       delete o.fly;
-      o.speed=o.speed||0.5;
-      o.curve=1.2;
+      o.speed=o.speed||0.35;
+      o.curve=1.1;
       map.flyTo(o);
     }else{
       map.easeTo(opts);
     }
   }
 
+  // Opening shot for each segment — all bearing:0
   const SEG_CAM=[
-    {center:[67.55,26.50],zoom:6.8,pitch:32,bearing:-5,  duration:4000},       // 0 مقصد
-    {center:[67.20,26.80],zoom:7.0,pitch:42,bearing:-18, fly:true,speed:0.52}, // 1 ڈیٹا
-    {center:[67.35,26.50],zoom:6.8,pitch:45,bearing:-5,  duration:3500},       // 2 نقشہ
-    {center:[67.50,26.60],zoom:7.2,pitch:38,bearing:-8,  duration:3500},       // 3 بائیں پینل
-    {center:[68.10,26.20],zoom:7.3,pitch:28,bearing:12,  fly:true,speed:0.5},  // 4 دائیں پینل
-    {center:[68.28,25.75],zoom:7.8,pitch:20,bearing:5,   duration:3500},       // 5 چارٹ 2D
-    {center:[67.20,27.45],zoom:7.8,pitch:45,bearing:-10, fly:true,speed:0.52}, // 6 طغیانی
-    {center:[67.90,26.20],zoom:7.5,pitch:36,bearing:-5,  fly:true,speed:0.48}  // 7 اہمیت
+    {center:[67.55,26.50],zoom:6.8,pitch:32,bearing:0,duration:5000},           // 0 مقصد
+    {center:[67.20,26.80],zoom:7.0,pitch:42,bearing:0,fly:true,speed:0.35},     // 1 ڈیٹا
+    {center:[67.35,26.50],zoom:6.8,pitch:45,bearing:0,duration:5000},           // 2 نقشہ
+    {center:[67.50,26.60],zoom:7.2,pitch:38,bearing:0,duration:5000},           // 3 بائیں پینل
+    {center:[68.10,26.20],zoom:7.3,pitch:28,bearing:0,fly:true,speed:0.35},     // 4 دائیں پینل
+    {center:[68.28,25.75],zoom:7.8,pitch:20,bearing:0,duration:5000},           // 5 چارٹ
+    {center:[67.20,27.45],zoom:7.8,pitch:45,bearing:0,fly:true,speed:0.35},     // 6 طغیانی
+    {center:[67.90,26.20],zoom:7.5,pitch:36,bearing:0,fly:true,speed:0.32}      // 7 اہمیت
   ];
 
   const SEG_SUBMOVES=[
 
-    // 0  (33.5s)
+    // 0  مقصد (33.5s)
     [
-      {pct:0.18,fly:false,center:[67.10,26.90],zoom:7.2,pitch:42,bearing:-20,duration:3800},
-      {pct:0.35,fly:false,center:[67.60,26.55],zoom:7.8,pitch:12,bearing:85, duration:4000},
-      {pct:0.52,fly:false,center:[67.55,26.50],zoom:8.5,pitch:8, bearing:0,  duration:3500},
-      {pct:0.65,fly:false,center:[67.50,26.50],zoom:7.0,pitch:38,bearing:-5, duration:3500},
-      {pct:0.80,fly:false,center:[67.75,26.25],zoom:6.5,pitch:30,bearing:-8, duration:3500}
+      // 3D: Kirthar mountains + Nai descent path
+      {pct:0.18,fly:false,center:[67.10,26.90],zoom:7.2,pitch:42,bearing:0,duration:5500},
+      // 2D: flyover east — pan center across the Kohistan plain, no rotation
+      {pct:0.36,fly:false,center:[67.65,26.55],zoom:7.8,pitch:10,bearing:0,duration:6000},
+      // 2D: close-up Nai path on flat land
+      {pct:0.54,fly:false,center:[67.55,26.50],zoom:8.5,pitch:8, bearing:0,duration:5500},
+      // 3D: simulation running — wide view
+      {pct:0.68,fly:false,center:[67.50,26.50],zoom:7.0,pitch:38,bearing:0,duration:5000},
+      // 3D: wide panorama close
+      {pct:0.82,fly:false,center:[67.72,26.28],zoom:6.5,pitch:30,bearing:0,duration:5000}
     ],
 
-    // 1  (39.1s)
+    // 1  ڈیٹا کے ذرائع (39.1s)
     [
-      {pct:0.10,fly:false,center:[67.00,26.95],zoom:7.8,pitch:46,bearing:-22,duration:3800},
-      {pct:0.22,fly:false,center:[66.95,27.00],zoom:8.5,pitch:40,bearing:-18,duration:4000},
-      {pct:0.33,fly:false,center:[67.30,26.80],zoom:7.5,pitch:8, bearing:0,  duration:4000},
-      {pct:0.46,fly:false,center:[68.15,26.25],zoom:7.2,pitch:10,bearing:5,  duration:3800},
-      {pct:0.56,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.48},
-      {pct:0.72,fly:false,center:[68.05,25.05],zoom:7.8,pitch:8, bearing:10, duration:3800},
-      {pct:0.86,fly:false,center:[67.50,26.20],zoom:6.8,pitch:35,bearing:-5, duration:3500}
+      // 3D: Kirthar terrain steep tilt
+      {pct:0.10,fly:false,center:[67.00,26.95],zoom:7.8,pitch:46,bearing:0,duration:5500},
+      // 3D: mountain ridge close-up
+      {pct:0.22,fly:false,center:[66.95,27.00],zoom:8.5,pitch:40,bearing:0,duration:6000},
+      // 2D: Nai watershed — all 9 paths top-down
+      {pct:0.34,fly:false,center:[67.30,26.80],zoom:7.5,pitch:8, bearing:0,duration:6000},
+      // 2D: Indus + chart area from above
+      {pct:0.47,fly:false,center:[68.15,26.25],zoom:7.2,pitch:10,bearing:0,duration:5500},
+      // 2D: Kotri Barrage top-down (one flyTo — long distance)
+      {pct:0.57,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,speed:0.33},
+      // 2D: canal network top-down
+      {pct:0.73,fly:false,center:[68.05,25.05],zoom:7.8,pitch:8, bearing:0,duration:5500},
+      // 3D: wide close
+      {pct:0.87,fly:false,center:[67.50,26.20],zoom:6.8,pitch:35,bearing:0,duration:5000}
     ],
 
-    // 2  (25.2s)
+    // 2  نقشہ (25.2s)
     [
-      {pct:0.19,fly:false,center:[66.95,26.80],zoom:7.8,pitch:46,bearing:-28,duration:3500},
-      {pct:0.30,fly:true, center:[68.22,26.45],zoom:7.2,pitch:18,bearing:12, speed:0.5},
-      {pct:0.46,fly:false,center:[67.45,26.55],zoom:7.8,pitch:8, bearing:0,  duration:4000},
-      {pct:0.58,fly:false,center:[67.60,26.42],zoom:8.2,pitch:12,bearing:5,  duration:3800},
-      {pct:0.78,fly:false,center:[67.35,26.50],zoom:7.0,pitch:40,bearing:-5, duration:3500}
+      // 3D: Kirthar mountains — "west"
+      {pct:0.20,fly:false,center:[66.95,26.80],zoom:7.8,pitch:46,bearing:0,duration:5000},
+      // 3D→2D: pan east to Indus (flyTo — long sweep, slow)
+      {pct:0.32,fly:true, center:[68.22,26.45],zoom:7.2,pitch:18,bearing:0,speed:0.32},
+      // 2D: the flat plain between — top-down
+      {pct:0.48,fly:false,center:[67.45,26.55],zoom:7.8,pitch:8, bearing:0,duration:5500},
+      // 2D: low over flat land — surface runoff area
+      {pct:0.60,fly:false,center:[67.60,26.42],zoom:8.2,pitch:12,bearing:0,duration:5500},
+      // 3D: wide cycle overview
+      {pct:0.80,fly:false,center:[67.35,26.50],zoom:7.0,pitch:40,bearing:0,duration:5000}
     ],
 
-    // 3  (28.3s)
+    // 3  بائیں پینل (28.3s)
     [
-      {pct:0.14,fly:false,center:[67.40,26.50],zoom:7.0,pitch:38,bearing:-5, duration:3500},
-      {pct:0.28,fly:false,center:[67.22,26.85],zoom:7.8,pitch:5, bearing:0,  duration:3800},
-      {pct:0.44,fly:false,center:[68.02,26.32],zoom:8.5,pitch:5, bearing:5,  duration:3800},
-      {pct:0.57,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.5},
-      {pct:0.70,fly:false,center:[67.82,26.85],zoom:7.8,pitch:35,bearing:5,  duration:3800},
-      {pct:0.84,fly:false,center:[67.90,27.20],zoom:8.5,pitch:28,bearing:5,  duration:3500}
+      // 3D: flood phase wide
+      {pct:0.15,fly:false,center:[67.40,26.50],zoom:7.0,pitch:38,bearing:0,duration:5500},
+      // 2D: Nai activity — top-down, no bearing change
+      {pct:0.30,fly:false,center:[67.22,26.85],zoom:7.8,pitch:5, bearing:0,duration:5500},
+      // 2D: FP Bund top-down close
+      {pct:0.46,fly:false,center:[68.02,26.32],zoom:8.5,pitch:5, bearing:0,duration:5500},
+      // 2D: Kotri Barrage top-down (flyTo)
+      {pct:0.58,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,speed:0.33},
+      // 3D: lakes and dams filling
+      {pct:0.72,fly:false,center:[67.82,26.85],zoom:7.8,pitch:35,bearing:0,duration:5500},
+      // 3D: Hamal Lake close
+      {pct:0.85,fly:false,center:[67.90,27.20],zoom:8.5,pitch:28,bearing:0,duration:5000}
     ],
 
-    // 4  (34.4s)
+    // 4  دائیں پینل (34.4s)
     [
-      {pct:0.16,fly:false,center:[67.22,27.25],zoom:8.0,pitch:5, bearing:0,  duration:4000},
-      {pct:0.30,fly:false,center:[68.05,26.22],zoom:8.2,pitch:5, bearing:5,  duration:4000},
-      {pct:0.40,fly:false,center:[68.08,25.90],zoom:7.8,pitch:15,bearing:178,duration:4000},
-      {pct:0.46,fly:false,center:[68.10,25.35],zoom:8.0,pitch:5, bearing:8,  duration:3500},
-      {pct:0.56,fly:true, center:[69.71,28.43],zoom:8.5,pitch:5, bearing:0,  speed:0.45},
-      {pct:0.64,fly:false,center:[68.87,27.71],zoom:8.5,pitch:5, bearing:0,  duration:3500},
-      {pct:0.71,fly:false,center:[68.35,25.38],zoom:8.5,pitch:5, bearing:0,  duration:3500},
-      {pct:0.80,fly:false,center:[67.50,26.75],zoom:7.0,pitch:35,bearing:-10,duration:3800},
-      {pct:0.90,fly:false,center:[67.68,25.75],zoom:7.2,pitch:32,bearing:-5, duration:3500}
+      // 2D: Nai dry beds top-down (north-up, like reading a map)
+      {pct:0.17,fly:false,center:[67.22,27.25],zoom:8.0,pitch:5, bearing:0,duration:6000},
+      // 2D: FP Bund top-down — the green line
+      {pct:0.31,fly:false,center:[68.05,26.22],zoom:8.2,pitch:5, bearing:0,duration:6000},
+      // 2D: pan south along bund — center moves south, no rotation
+      {pct:0.41,fly:false,center:[68.05,25.80],zoom:7.8,pitch:12,bearing:0,duration:6000},
+      // 2D: canal network
+      {pct:0.47,fly:false,center:[68.10,25.35],zoom:8.0,pitch:5, bearing:0,duration:5500},
+      // 2D: fly to Guddu Barrage top-down (flyTo — very long distance)
+      {pct:0.57,fly:true, center:[69.71,28.43],zoom:8.5,pitch:5, bearing:0,speed:0.30},
+      // 2D: pan to Sukkur (easeTo — nearby)
+      {pct:0.65,fly:false,center:[68.87,27.71],zoom:8.5,pitch:5, bearing:0,duration:5500},
+      // 2D: pan to Kotri (easeTo — nearby)
+      {pct:0.73,fly:false,center:[68.35,25.38],zoom:8.5,pitch:5, bearing:0,duration:5500},
+      // 3D: districts wide
+      {pct:0.82,fly:false,center:[67.50,26.75],zoom:7.0,pitch:35,bearing:0,duration:5500},
+      // 3D: pan south to Jamshoro
+      {pct:0.91,fly:false,center:[67.68,25.75],zoom:7.2,pitch:32,bearing:0,duration:5000}
     ],
 
-    // 5  (34.8s)
+    // 5  چارٹ (34.8s)
     [
-      {pct:0.14,fly:false,center:[68.28,25.20],zoom:7.8,pitch:10,bearing:178,duration:4500},
-      {pct:0.22,fly:false,center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  duration:3500},
-      {pct:0.32,fly:false,center:[67.80,26.00],zoom:7.0,pitch:35,bearing:-5, duration:4000},
-      {pct:0.46,fly:false,center:[68.30,27.00],zoom:7.5,pitch:10,bearing:0,  duration:3800},
-      {pct:0.56,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.48},
-      {pct:0.68,fly:false,center:[67.72,26.42],zoom:8.5,pitch:32,bearing:5,  duration:3800},
-      {pct:0.80,fly:false,center:[67.70,26.44],zoom:8.5,pitch:8, bearing:0,  duration:3500},
-      {pct:0.90,fly:false,center:[67.50,26.00],zoom:6.8,pitch:36,bearing:-5, duration:3500}
+      // 2D: pan south along Indus — center moves, no rotation
+      {pct:0.15,fly:false,center:[68.28,25.20],zoom:7.8,pitch:10,bearing:0,duration:6500},
+      // 2D: Kotri measurement point top-down
+      {pct:0.24,fly:false,center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,duration:5500},
+      // 3D: wide — flood stages context
+      {pct:0.33,fly:false,center:[67.80,26.00],zoom:7.0,pitch:35,bearing:0,duration:6000},
+      // 2D: upper Indus — where peaks form, pan north
+      {pct:0.47,fly:false,center:[68.30,27.00],zoom:7.5,pitch:10,bearing:0,duration:6000},
+      // 2D: Kotri at peak — flyTo back south
+      {pct:0.57,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,speed:0.33},
+      // 3D: Manchar Lake — nowhere to overflow
+      {pct:0.68,fly:false,center:[67.72,26.42],zoom:8.5,pitch:32,bearing:0,duration:5500},
+      // 2D: Manchar surface top-down
+      {pct:0.80,fly:false,center:[67.70,26.44],zoom:8.5,pitch:8, bearing:0,duration:5500},
+      // 3D: wide pullback
+      {pct:0.91,fly:false,center:[67.50,26.00],zoom:6.8,pitch:36,bearing:0,duration:5000}
     ],
 
-    // 6  (34.8s)
+    // 6  طغیانی کا منظر (34.8s)
+    // All 2D top-down for Nai origins — north-up, pan between them, no rotation
     [
-      {pct:0.25,fly:false,center:[66.95,27.58],zoom:8.5,pitch:5, bearing:90, duration:3500},
-      {pct:0.30,fly:false,center:[67.42,27.50],zoom:8.0,pitch:14,bearing:84, duration:4000},
-      {pct:0.35,fly:false,center:[66.95,27.12],zoom:8.5,pitch:5, bearing:90, duration:3200},
-      {pct:0.41,fly:false,center:[66.95,26.60],zoom:8.5,pitch:5, bearing:90, duration:3200},
-      {pct:0.47,fly:false,center:[67.32,26.87],zoom:8.8,pitch:36,bearing:-8, duration:3500},
-      {pct:0.53,fly:false,center:[66.95,25.90],zoom:8.5,pitch:5, bearing:90, duration:3200},
-      {pct:0.58,fly:false,center:[67.45,25.38],zoom:8.0,pitch:14,bearing:84, duration:3500},
-      {pct:0.67,fly:false,center:[67.60,26.55],zoom:7.0,pitch:40,bearing:-8, duration:4000},
-      {pct:0.78,fly:false,center:[67.62,26.45],zoom:8.0,pitch:10,bearing:5,  duration:3800},
-      {pct:0.88,fly:false,center:[67.50,26.40],zoom:6.8,pitch:35,bearing:-8, duration:3500}
+      // 2D: Nai Naig origin top-down
+      {pct:0.25,fly:false,center:[66.95,27.58],zoom:8.5,pitch:5, bearing:0,duration:5000},
+      // 2D: pan east along Naig path (center moves east, no rotation)
+      {pct:0.30,fly:false,center:[67.42,27.50],zoom:8.0,pitch:12,bearing:0,duration:5000},
+      // 2D: Nai Bhan + Pakho — pan south
+      {pct:0.35,fly:false,center:[66.95,27.12],zoom:8.5,pitch:5, bearing:0,duration:5000},
+      // 2D: Nai Dugdu + Khedro — pan south
+      {pct:0.42,fly:false,center:[66.95,26.60],zoom:8.5,pitch:5, bearing:0,duration:5000},
+      // 3D: Nai Gaj Dam — switch to 3D for the dam structure
+      {pct:0.48,fly:false,center:[67.32,26.87],zoom:8.8,pitch:36,bearing:0,duration:5000},
+      // 2D: Nai Ranjo + Chandio
+      {pct:0.54,fly:false,center:[66.95,25.90],zoom:8.5,pitch:5, bearing:0,duration:5000},
+      // 2D: Nai Baran — pan east along path
+      {pct:0.59,fly:false,center:[67.45,25.38],zoom:8.0,pitch:12,bearing:0,duration:5000},
+      // 3D: water spreading — pull back to wide 3D
+      {pct:0.68,fly:false,center:[67.60,26.55],zoom:7.0,pitch:40,bearing:0,duration:5500},
+      // 2D: surface runoff top-down — flat land
+      {pct:0.79,fly:false,center:[67.62,26.45],zoom:8.0,pitch:10,bearing:0,duration:5500},
+      // 3D: final wide surge view
+      {pct:0.89,fly:false,center:[67.50,26.40],zoom:6.8,pitch:35,bearing:0,duration:5000}
     ],
 
-    // 7  (30.5s)
+    // 7  اہمیت (30.5s)
     [
-      {pct:0.10,fly:false,center:[68.02,26.32],zoom:8.8,pitch:5, bearing:5,  duration:3800},
-      {pct:0.18,fly:false,center:[67.88,27.20],zoom:8.5,pitch:30,bearing:5,  duration:3200},
-      {pct:0.24,fly:false,center:[67.72,26.42],zoom:8.5,pitch:30,bearing:5,  duration:3200},
-      {pct:0.33,fly:false,center:[67.50,26.50],zoom:6.5,pitch:28,bearing:-10,duration:4000},
-      {pct:0.46,fly:false,center:[67.62,26.42],zoom:8.0,pitch:8, bearing:0,  duration:4000},
-      {pct:0.53,fly:false,center:[68.25,25.80],zoom:7.8,pitch:10,bearing:5,  duration:3500},
-      {pct:0.60,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.5},
-      {pct:0.70,fly:false,center:[68.05,26.20],zoom:7.2,pitch:32,bearing:8,  duration:4000},
-      {pct:0.82,fly:false,center:[68.08,26.65],zoom:7.8,pitch:14,bearing:2,  duration:3500},
-      {pct:0.90,fly:false,center:[67.60,26.40],zoom:6.5,pitch:32,bearing:-8, duration:3500}
+      // 2D: FP Bund top-down — orange glow
+      {pct:0.11,fly:false,center:[68.02,26.32],zoom:8.8,pitch:5, bearing:0,duration:5500},
+      // 3D: Hamal Lake filling
+      {pct:0.20,fly:false,center:[67.88,27.20],zoom:8.5,pitch:30,bearing:0,duration:5000},
+      // 3D: Manchar Lake close
+      {pct:0.26,fly:false,center:[67.72,26.42],zoom:8.5,pitch:30,bearing:0,duration:5000},
+      // 3D: wide — 2022 scale (moderate pullback, not extreme zoom)
+      {pct:0.34,fly:false,center:[67.50,26.50],zoom:6.5,pitch:28,bearing:0,duration:6000},
+      // 2D: submerged plain top-down
+      {pct:0.48,fly:false,center:[67.62,26.42],zoom:8.0,pitch:8, bearing:0,duration:6000},
+      // 2D: Indus 2025 peaks — pan north along river
+      {pct:0.54,fly:false,center:[68.25,25.80],zoom:7.8,pitch:10,bearing:0,duration:5500},
+      // 2D: Kotri at peak top-down (flyTo)
+      {pct:0.62,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,speed:0.33},
+      // 3D: bund + barrages + lakes together
+      {pct:0.72,fly:false,center:[68.05,26.20],zoom:7.2,pitch:32,bearing:0,duration:5500},
+      // 2D: inspection pan north along bund
+      {pct:0.83,fly:false,center:[68.05,26.65],zoom:7.8,pitch:12,bearing:0,duration:5500},
+      // 3D: final wide pullback
+      {pct:0.91,fly:false,center:[67.60,26.40],zoom:6.5,pitch:32,bearing:0,duration:5000}
     ]
   ];
 
@@ -1739,7 +1799,7 @@ map.on('load',()=>{
   function restoreCamera(){
     clearCamTimers();
     if(typeof map!=='undefined'&&map)
-      map.flyTo({center:[67.35,26.50],zoom:7.2,pitch:48,bearing:-5,speed:0.5});
+      map.flyTo({center:[67.35,26.50],zoom:7.2,pitch:48,bearing:0,speed:0.38});
   }
 
   let cur=0,playing=false,progTimer=null;
