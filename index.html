@@ -533,34 +533,37 @@ function mToPx(m,lat){const z=map.getZoom();return m/(156543.03*Math.cos(lat*Mat
 // origin:'kirthar' = Kirthar range (west, flows E across the right bank)
 // size:'major'|'medium'|'minor' drives dry-bed line width
 const NAIS=[
-  // ── KIRTHAR RANGE GROUP — confirmed from SID map · flow E/SE ─────────────
-  // Source: Hill Torrent (Nai) Watersheds map · Sindh Irrigation Department
-  {name:'Nai Naig',   origin:'kirthar',size:'medium',
-   pts:[[66.92,27.65],[67.22,27.58],[67.45,27.52],[67.62,27.45]],
+  // ── KOH-E-SULAIMAN GROUP — northern catchment · flows SSE into Kohistan ──
+  // Nai Naig, Bhan, Pakho drain the southern foothills of the Sulaiman range
+  // (lat ~28.0-28.5°N); paths descend south-southeast onto the Kohistan plain.
+  {name:'Nai Naig',   origin:'koh',size:'medium',
+   pts:[[66.85,28.08],[66.92,27.90],[67.10,27.75],[67.30,27.62],[67.50,27.50],[67.62,27.45]],
    to:'hamal',delay:0,spd:.11},
-  {name:'Nai Bhan',   origin:'kirthar',size:'medium',
-   pts:[[66.92,27.18],[67.22,27.22],[67.48,27.32],[67.60,27.42]],
+  {name:'Nai Bhan',   origin:'koh',size:'medium',
+   pts:[[66.85,27.62],[66.95,27.48],[67.18,27.32],[67.42,27.22],[67.60,27.15],[67.65,27.10]],
    to:'hamal',delay:0.8,spd:.11},
-  {name:'Nai Pakho',  origin:'kirthar',size:'medium',
-   pts:[[66.92,26.88],[67.22,26.90],[67.48,26.95],[67.63,27.05]],
+  {name:'Nai Pakho',  origin:'koh',size:'medium',
+   pts:[[66.85,27.18],[66.95,27.05],[67.18,26.98],[67.42,26.98],[67.55,27.05],[67.63,27.05]],
    to:'hamal',delay:1.6,spd:.11},
+  // ── KIRTHAR RANGE GROUP — central/southern catchment · flows E/ESE ────────
+  // Source: Hill Torrent (Nai) Watersheds map · Sindh Irrigation Department
   {name:'Nai Dugdu',  origin:'kirthar',size:'medium',
-   pts:[[66.92,26.62],[67.20,26.66],[67.45,26.76],[67.63,26.88]],
+   pts:[[66.82,26.62],[67.05,26.65],[67.28,26.72],[67.48,26.80],[67.63,26.88]],
    to:'hamal',delay:2.4,spd:.11},
   {name:'Nai Khedro', origin:'kirthar',size:'medium',
-   pts:[[66.92,26.38],[67.15,26.48],[67.28,26.65],[67.32,26.87]],
+   pts:[[66.82,26.38],[67.05,26.42],[67.22,26.52],[67.28,26.68],[67.32,26.87]],
    to:'gajdam',delay:3.2,spd:.11},
   {name:'Nai Gaj',    origin:'kirthar',size:'major',
    pts:[[66.82,26.90],[67.10,26.88],[67.32,26.87],[67.50,26.62],[67.62,26.38],[67.68,26.42]],
    to:'manchar',delay:4.0,spd:.12,hasDam:true,damAt:[67.32,26.87]},
   {name:'Nai Ranjo',  origin:'kirthar',size:'medium',
-   pts:[[66.92,25.88],[67.18,25.92],[67.42,26.06],[67.62,26.22],[67.68,26.38]],
+   pts:[[66.82,25.88],[67.05,25.92],[67.28,26.02],[67.50,26.18],[67.65,26.30],[67.68,26.38]],
    to:'manchar',delay:4.8,spd:.11},
   {name:'Nai Chandio',origin:'kirthar',size:'medium',
-   pts:[[66.92,25.62],[67.18,25.68],[67.40,25.82],[67.58,26.00],[67.65,26.22],[67.68,26.38]],
+   pts:[[66.82,25.62],[67.05,25.65],[67.28,25.76],[67.48,25.92],[67.60,26.12],[67.68,26.38]],
    to:'manchar',delay:5.6,spd:.11},
   {name:'Nai Baran',  origin:'kirthar',size:'major',
-   pts:[[66.92,25.35],[67.20,25.38],[67.48,25.38],[67.72,25.38],[67.92,25.41]],
+   pts:[[66.82,25.35],[67.05,25.36],[67.30,25.38],[67.55,25.38],[67.75,25.38],[67.92,25.41]],
    to:'darawai',delay:6.4,spd:.10}
 ];
 const WB={
@@ -669,7 +672,7 @@ const BARRAGES=[
 ];
 
 const DISTS=[{n:'LARKANA',lon:68.20,lat:27.58},{n:'QAMBAR\nSHAHDADKOT',lon:67.50,lat:27.18},{n:'DADU',lon:67.82,lat:26.72},{n:'SEHWAN',lon:68.05,lat:26.43},{n:'JAMSHORO',lon:68.22,lat:25.82}];
-const MTNS=[{n:'KOH-E-SULAIMAN\nRANGE',lon:66.85,lat:27.80},{n:'KIRTHAR\nMOUNTAIN RANGE',lon:66.82,lat:26.50},{n:'LAKI HILLS',lon:67.12,lat:25.28}];
+const MTNS=[{n:'KOH-E-SULAIMAN\nRANGE',lon:66.85,lat:28.30},{n:'KIRTHAR\nMOUNTAIN RANGE',lon:66.82,lat:26.50},{n:'LAKI HILLS',lon:67.12,lat:25.28}];
 
 // ─── KOHISTAN WATERSHED POLYGON ───────────────────────────────────────────
 // Encloses the Hill Torrent plain between the mountain foothills (west) and
@@ -1269,7 +1272,14 @@ function drawNai(n,ts){
     ctx.strokeStyle='rgba(100,185,245,0.45)';ctx.lineWidth=0.8;
     roundRect(ctx,cardX,cardY,cardW,cardH,5);ctx.stroke();
 
-    // ── Mountain icon (Kirthar Range silhouette) ──────────────────────────
+    // ── Range label above mountain icon (Koh-e-Sulaiman or Kirthar) ─────────
+    const rangeLbl=n.origin==='koh'?'KOH-E-SULAIMAN':'KIRTHAR RANGE';
+    ctx.font='500 6px Segoe UI';
+    ctx.fillStyle=n.origin==='koh'?'rgba(255,200,100,0.90)':'rgba(180,220,255,0.85)';
+    ctx.textAlign='center';ctx.shadowBlur=0;
+    ctx.fillText(rangeLbl,px,cardY+8);
+
+    // ── Mountain icon ─────────────────────────────────────────────────────
     // Two peaks + ridge line, centred in the top half of the card
     const mx=px,my=cardY+13,ms=9; // centre x, base y, scale
     ctx.beginPath();
