@@ -1581,39 +1581,158 @@ map.on('load',()=>{
      src:'audio/seg8.mp3'}
   ];
 
-  /* ── Camera choreography ─────────────────────────────────────────────── */
-  // Default view to restore after tour ends
+  /* ── Camera choreography — sentence-level sync ──────────────────────── */
+  // Measured MP3 durations (seconds): seg1=33.5 seg2=39.1 seg3=25.2 seg4=28.3
+  //                                   seg5=34.4 seg6=34.8 seg7=34.8 seg8=30.5
+  // pct = sentence_start_time / segment_total_duration
+  // All pitch values capped at 48° to avoid canvas frustum clipping
+
   const CAM_DEFAULT={center:[67.35,26.50],zoom:7.2,pitch:48,bearing:-5,duration:3500};
 
-  // Opening camera position for each segment (index matches SEGMENTS)
+  // Opening camera for each segment (fires immediately on play)
   const SEG_CAM=[
-    {center:[67.60,26.55],zoom:6.3, pitch:30,bearing:-5, duration:3500}, // 0 مقصد      — wide overview
-    {center:[67.05,26.80],zoom:7.2, pitch:52,bearing:-25,duration:3500}, // 1 ڈیٹا      — Kirthar terrain
-    {center:[67.00,26.70],zoom:7.0, pitch:50,bearing:-20,duration:3000}, // 2 نقشہ      — mountains (sweep follows)
-    {center:[67.85,26.85],zoom:7.8, pitch:35,bearing:5,  duration:3000}, // 3 بائیں پینل — lakes
-    {center:[68.10,26.20],zoom:7.5, pitch:30,bearing:15, duration:3000}, // 4 دائیں پینل — FP Bund / canals
-    {center:[68.30,25.60],zoom:8.0, pitch:25,bearing:5,  duration:3000}, // 5 چارٹ      — Kotri / lower Indus
-    {center:[67.20,27.45],zoom:7.8, pitch:52,bearing:-10,duration:3000}, // 6 طغیانی    — north Nais (pan follows)
-    {center:[67.80,26.30],zoom:6.8, pitch:42,bearing:-8, duration:4000}  // 7 اہمیت     — wide final view
+    // 0 مقصد — wide establishing shot of the whole watershed
+    {center:[67.60,26.55],zoom:6.3,pitch:28,bearing:-5,  duration:3500},
+    // 1 ڈیٹا — tilted terrain view to show elevation data
+    {center:[67.40,26.60],zoom:6.5,pitch:35,bearing:-10, duration:3500},
+    // 2 نقشہ — broad 3D overview before sweep
+    {center:[67.35,26.50],zoom:6.8,pitch:45,bearing:-5,  duration:3000},
+    // 3 بائیں پینل — central simulation area
+    {center:[67.50,26.60],zoom:7.3,pitch:38,bearing:-8,  duration:3000},
+    // 4 دائیں پینل — eastern side showing bund + canals
+    {center:[68.10,26.20],zoom:7.5,pitch:30,bearing:15,  duration:3000},
+    // 5 چارٹ — lower Indus / Kotri zone
+    {center:[68.30,25.60],zoom:8.0,pitch:25,bearing:5,   duration:3000},
+    // 6 طغیانی — northern Nais ready to surge
+    {center:[67.20,27.45],zoom:7.8,pitch:48,bearing:-10, duration:3000},
+    // 7 اہمیت — FP Bund area, pressure building
+    {center:[67.90,26.20],zoom:7.5,pitch:38,bearing:-5,  duration:4000}
   ];
 
-  // Sub-moves within a segment: [{pct, cam}] fired at that fraction of audio duration
-  // pct=0.45 means at 45% of the segment's playback time
+  // Sentence-level sub-moves per segment
+  // Each entry fires at pct × audio.duration milliseconds after segment starts
   const SEG_SUBMOVES=[
-    null, // 0
-    null, // 1
-    [ // 2 نقشہ — sweep west→east: mountains → plain → Indus
-      {pct:0.45,cam:{center:[68.05,26.50],zoom:7.0,pitch:40,bearing:12,duration:3500}}
+
+    // ── 0  مقصد (33.5s) ───────────────────────────────────────────────
+    [
+      // S2 7s=0.21 "یہ نالے ہر مون سون میں کرتھر پہاڑوں سے…" — show mountains→right bank path
+      {pct:0.21,cam:{center:[67.15,26.85],zoom:6.9,pitch:42,bearing:-18,duration:2800}},
+      // S3 19s=0.57 "یہ سمیولیشن…" — show the simulation running
+      {pct:0.57,cam:{center:[67.50,26.50],zoom:7.0,pitch:38,bearing:-5, duration:2800}},
+      // S4 25s=0.75 "رپورٹ کے اعداد…" — wide panorama
+      {pct:0.75,cam:{center:[67.80,26.20],zoom:6.5,pitch:35,bearing:-8, duration:2800}}
     ],
-    null, // 3
-    null, // 4
-    null, // 5
-    [ // 6 طغیانی — slow north→south following each Nai group
-      {pct:0.28,cam:{center:[67.40,26.90],zoom:7.6,pitch:50,bearing:-8, duration:4500}},
-      {pct:0.55,cam:{center:[67.65,26.15],zoom:7.5,pitch:48,bearing:-5, duration:4500}},
-      {pct:0.82,cam:{center:[67.88,25.45],zoom:7.8,pitch:45,bearing:-3, duration:3500}}
+
+    // ── 1  ڈیٹا کے ذرائع (39.1s) ─────────────────────────────────────
+    [
+      // S2 2.7s=0.07 "خطہ زمین ناسا کے سیٹلائٹ…" — show 3D terrain elevation
+      {pct:0.07,cam:{center:[67.10,26.85],zoom:7.0,pitch:48,bearing:-22,duration:2500}},
+      // S3 9s=0.23 "نو نائیوں کے راستے…" — zoom to Nai watershed paths
+      {pct:0.23,cam:{center:[67.25,26.80],zoom:7.3,pitch:45,bearing:-12,duration:2800}},
+      // S4 16.4s=0.42 "چارٹ پر دکھائی دینے والی دو سیلابی چوٹیاں…" — show Indus/chart area
+      {pct:0.42,cam:{center:[68.10,26.20],zoom:7.0,pitch:28,bearing:5,  duration:2800}},
+      // S5 21.9s=0.56 "چوبیس اگست…چھ لاکھ پینتیس ہزار کیوسک" — Kotri Barrage close-up
+      {pct:0.56,cam:{center:[68.32,25.38],zoom:8.2,pitch:22,bearing:3,  duration:2500}},
+      // S6 30.9s=0.79 "ٹھٹہ ڈویژن کا نہری نیٹ ورک…" — canal network downstream
+      {pct:0.79,cam:{center:[68.05,25.10],zoom:7.5,pitch:25,bearing:12, duration:2800}}
     ],
-    null  // 7
+
+    // ── 2  نقشہ (25.2s) ───────────────────────────────────────────────
+    [
+      // S2 4.8s=0.19 "مغرب میں کرتھر پہاڑ…" — fly to Kirthar mountains
+      {pct:0.19,cam:{center:[66.95,26.75],zoom:7.5,pitch:48,bearing:-30,duration:2500}},
+      // S3 7.1s=0.28 "دریائے سندھ شمال سے جنوب…" — sweep east to Indus
+      {pct:0.28,cam:{center:[68.25,26.40],zoom:7.2,pitch:32,bearing:18, duration:2800}},
+      // S4 11.4s=0.45 "ان کے درمیان چپٹا کوہستانی میدان" — the flat plain between
+      {pct:0.45,cam:{center:[67.45,26.55],zoom:7.0,pitch:40,bearing:-5, duration:2500}},
+      // S5 14.1s=0.56 "یہ وہ زمین ہے جسے نو پہاڑی نالے…" — wide flood zone
+      {pct:0.56,cam:{center:[67.50,26.50],zoom:6.8,pitch:38,bearing:-8, duration:2500}},
+      // S6 20.4s=0.81 "سیلابی دور مسلسل…" — cycle overview
+      {pct:0.81,cam:{center:[67.35,26.50],zoom:6.9,pitch:42,bearing:-5, duration:2500}}
+    ],
+
+    // ── 3  بائیں پینل (28.3s) ─────────────────────────────────────────
+    [
+      // S2 3.1s=0.11 "یہ موجودہ سیلابی مرحلہ…" — show flood phase view
+      {pct:0.11,cam:{center:[67.40,26.50],zoom:7.0,pitch:42,bearing:-5, duration:2500}},
+      // S3 7.1s=0.25 "نیچے تین براہِ راست اعداد…" — slightly wider
+      {pct:0.25,cam:{center:[67.35,26.55],zoom:6.9,pitch:40,bearing:-5, duration:2200}},
+      // S4 9.9s=0.35 "نو میں سے کتنی نائیاں…" — show active Nais
+      {pct:0.35,cam:{center:[67.20,26.80],zoom:7.5,pitch:46,bearing:-15,duration:2500}},
+      // mid-S4 14.7s=0.52 "سیلابی بند دباؤ…کوٹری بیراج…" — FP Bund + Kotri
+      {pct:0.52,cam:{center:[68.00,26.00],zoom:7.2,pitch:30,bearing:8,  duration:2500}},
+      // S5 20.1s=0.71 "نیچے چار بھرنے والی پٹیاں…جھیلیں…ڈیم" — lakes & dams
+      {pct:0.71,cam:{center:[67.82,26.85],zoom:7.8,pitch:35,bearing:5,  duration:2800}}
+    ],
+
+    // ── 4  دائیں پینل (34.4s) ─────────────────────────────────────────
+    [
+      // S2 5.8s=0.17 "نیلی ٹوٹی لکیریں نو خشک نائیوں…" — zoom to Nai bed lines
+      {pct:0.17,cam:{center:[67.20,26.80],zoom:7.8,pitch:46,bearing:-15,duration:2800}},
+      // S3 10.7s=0.31 "سبز لکیر…سیلابی بند" — fly to FP Bund (green line)
+      {pct:0.31,cam:{center:[68.05,26.20],zoom:7.8,pitch:32,bearing:10, duration:2800}},
+      // S4 15.5s=0.45 "سیروی لکیریں ٹھٹہ ڈویژن…نہریں" — canal network
+      {pct:0.45,cam:{center:[68.10,25.40],zoom:7.5,pitch:25,bearing:12, duration:2500}},
+      // S5 19.3s=0.56 "پیلے ہیرے…گدو، سکھر، اور کوٹری" — all 3 barrages in view
+      {pct:0.56,cam:{center:[68.20,26.50],zoom:7.3,pitch:28,bearing:5,  duration:2500}},
+      // S6 24.8s=0.72 "سیلابی محاذ…ضلعی ٹریکر" — wide district view
+      {pct:0.72,cam:{center:[67.50,26.80],zoom:7.0,pitch:35,bearing:-10,duration:2500}},
+      // S7 30s=0.87 "پہلے لاڑکانہ، پھر قمبر…جامشورو" — pan south through districts
+      {pct:0.87,cam:{center:[67.70,25.70],zoom:7.2,pitch:33,bearing:-5, duration:2800}}
+    ],
+
+    // ── 5  چارٹ (34.8s) ───────────────────────────────────────────────
+    [
+      // S2 7s=0.20 "کیوسک یعنی فی سیکنڈ…" — Kotri measurement point
+      {pct:0.20,cam:{center:[68.35,25.38],zoom:8.5,pitch:20,bearing:3,  duration:2500}},
+      // S3 10.4s=0.30 "رنگین پٹیاں…سپر فلڈ" — wide flood stages context
+      {pct:0.30,cam:{center:[67.80,26.00],zoom:7.0,pitch:35,bearing:-5, duration:2800}},
+      // S4 16.4s=0.47 "دو نشان زد چوٹیاں حقیقی ہیں" — upper Indus
+      {pct:0.47,cam:{center:[68.35,26.50],zoom:7.5,pitch:28,bearing:5,  duration:2500}},
+      // S5 19.4s=0.56 "چوبیس اگست…چودہ ستمبر" — Kotri peak zoom
+      {pct:0.56,cam:{center:[68.32,25.38],zoom:8.0,pitch:22,bearing:3,  duration:2200}},
+      // S6 23.3s=0.67 "دریائے سندھ منچھر جھیل…قبول کرنے سے قاصر" — Manchar Lake
+      {pct:0.67,cam:{center:[67.72,26.42],zoom:8.0,pitch:35,bearing:5,  duration:2500}},
+      // S7 30.9s=0.89 "پانی کے پاس جانے کی کوئی جگہ نہیں" — wide dramatic pullback
+      {pct:0.89,cam:{center:[67.50,26.00],zoom:6.8,pitch:40,bearing:-5, duration:2800}}
+    ],
+
+    // ── 6  طغیانی کا منظر (34.8s) ────────────────────────────────────
+    // Each Nai named → camera tracks each activation point north→south
+    [
+      // S2 start 8.7s=0.25 "نائی نائیگ" — Nai Naig origin
+      {pct:0.25,cam:{center:[67.22,27.52],zoom:8.0,pitch:46,bearing:-10,duration:2200}},
+      // "پھر بھان، پاکھو" 11.9s=0.34 — Nai Bhan + Pakho
+      {pct:0.34,cam:{center:[67.28,27.10],zoom:7.8,pitch:46,bearing:-10,duration:2200}},
+      // "ڈگڈو، کھیدرو" 14.2s=0.41 — Nai Dugdu + Khedro
+      {pct:0.41,cam:{center:[67.30,26.65],zoom:7.7,pitch:46,bearing:-8, duration:2200}},
+      // "نائی گاج" 16.3s=0.47 — Nai Gaj Dam close-up
+      {pct:0.47,cam:{center:[67.32,26.87],zoom:8.2,pitch:45,bearing:-8, duration:2000}},
+      // "رانجو، چاندیو" 18.3s=0.53 — Nai Ranjo + Chandio
+      {pct:0.53,cam:{center:[67.55,26.10],zoom:7.7,pitch:46,bearing:-6, duration:2200}},
+      // "نائی بارن" 20s=0.58 — Nai Baran near Jamshoro
+      {pct:0.58,cam:{center:[67.80,25.38],zoom:8.0,pitch:44,bearing:-5, duration:2000}},
+      // S3 23.3s=0.67 "پانی کسی نہر میں نہیں رہتا" — wide spreading view
+      {pct:0.67,cam:{center:[67.60,26.55],zoom:7.0,pitch:42,bearing:-8, duration:2800}},
+      // S4+S5 27.5s=0.79 "ہر سمت زمین پر پھیلتا" — low wide surface runoff view
+      {pct:0.79,cam:{center:[67.50,26.40],zoom:6.8,pitch:38,bearing:-8, duration:2800}}
+    ],
+
+    // ── 7  اہمیت (30.5s) ──────────────────────────────────────────────
+    [
+      // S2 4.9s=0.16 "جھیلوں کو بھرتے دیکھیں" — Hamal Lake filling
+      {pct:0.16,cam:{center:[67.82,27.10],zoom:8.0,pitch:35,bearing:5,  duration:2200}},
+      // S3 6.4s=0.21 "دریائے سندھ کو سیلابی مراحل سے…" — Manchar + Indus
+      {pct:0.21,cam:{center:[67.95,26.50],zoom:7.5,pitch:30,bearing:5,  duration:2200}},
+      // S4 9.5s=0.31 "دو ہزار بائیس میں…726 فیصد" — wide dramatic 2022
+      {pct:0.31,cam:{center:[67.50,26.50],zoom:6.5,pitch:35,bearing:-10,duration:2800}},
+      // S5 15.3s=0.50 "دو ہزار پچیس…دو بار عروج" — Indus double peak / barrages
+      {pct:0.50,cam:{center:[68.25,25.80],zoom:7.5,pitch:28,bearing:5,  duration:2800}},
+      // S6 21.1s=0.69 "بند، بیراج، جھیلیں…سست کرتے ہیں" — bund + barrages together
+      {pct:0.69,cam:{center:[68.05,26.20],zoom:7.5,pitch:32,bearing:8,  duration:2500}},
+      // S7 25.6s=0.84 "یہی وہ چیلنج ہے…ہر سال" — final wide pullback
+      {pct:0.84,cam:{center:[67.60,26.40],zoom:6.5,pitch:35,bearing:-8, duration:3000}}
+    ]
   ];
 
   let camTimers=[];
