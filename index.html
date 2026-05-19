@@ -533,44 +533,51 @@ function mToPx(m,lat){const z=map.getZoom();return m/(156543.03*Math.cos(lat*Mat
 // origin:'kirthar' = Kirthar range (west, flows E across the right bank)
 // size:'major'|'medium'|'minor' drives dry-bed line width
 const NAIS=[
-  // ── KOH-E-SULAIMAN GROUP — northern catchment · flows SSE into Kohistan ──
-  // Nai Naig, Bhan, Pakho drain the southern foothills of the Sulaiman range
-  // (lat ~28.0-28.5°N); paths descend south-southeast onto the Kohistan plain.
-  {name:'Nai Naig',   origin:'koh',size:'medium',
-   pts:[[66.85,28.08],[66.92,27.90],[67.10,27.75],[67.30,27.62],[67.50,27.50],[67.62,27.45]],
-   to:'hamal',delay:0,spd:.11},
-  {name:'Nai Bhan',   origin:'koh',size:'medium',
-   pts:[[66.85,27.62],[66.95,27.48],[67.18,27.32],[67.42,27.22],[67.60,27.15],[67.65,27.10]],
-   to:'hamal',delay:0.8,spd:.11},
-  {name:'Nai Pakho',  origin:'koh',size:'medium',
-   pts:[[66.85,27.18],[66.95,27.05],[67.18,26.98],[67.42,26.98],[67.55,27.05],[67.63,27.05]],
+  // ── ALL KIRTHAR RANGE — gauging coords from Sindh Irrigation Dept records ──
+  // Each path: Kirthar foothills (lon ~66.82°E) → gauging station → destination
+  // Gauging station = SID measurement point where torrent exits the mountains.
+  {name:'Nai Naig',   origin:'kirthar',size:'medium',
+   // Gauging: 26.2731°N 67.4215°E — valley stream 45 km SW Sehwan → Manchar
+   pts:[[66.82,26.25],[67.05,26.26],[67.25,26.27],[67.42,26.27],[67.55,26.35],[67.67,26.42]],
+   to:'manchar',delay:0,spd:.11},
+  {name:'Nai Bhan',   origin:'kirthar',size:'medium',
+   // Gauging: 26.4182°N 67.5510°E — N of Sehwan, Kirthar foothills → Manchar
+   pts:[[66.82,26.40],[67.10,26.41],[67.30,26.41],[67.55,26.42],[67.67,26.42]],
+   to:'manchar',delay:0.8,spd:.11},
+  {name:'Nai Pakho',  origin:'kirthar',size:'medium',
+   // Gauging: 26.5891°N 67.4328°E — Qambar-Shahdadkot / Dadu border plains
+   pts:[[66.82,26.58],[67.08,26.58],[67.28,26.59],[67.43,26.59],[67.55,26.62],[67.63,26.70]],
    to:'hamal',delay:1.6,spd:.11},
-  // ── KIRTHAR RANGE GROUP — central/southern catchment · flows E/ESE ────────
-  // Source: Hill Torrent (Nai) Watersheds map · Sindh Irrigation Department
   {name:'Nai Dugdu',  origin:'kirthar',size:'medium',
-   pts:[[66.82,26.62],[67.05,26.65],[67.28,26.72],[67.48,26.80],[67.63,26.88]],
+   // Gauging: 26.6945°N 67.3812°E — drains E toward Kachho desert → Hamal
+   pts:[[66.82,26.68],[67.05,26.69],[67.22,26.69],[67.38,26.69],[67.52,26.75],[67.63,26.85]],
    to:'hamal',delay:2.4,spd:.11},
   {name:'Nai Khedro', origin:'kirthar',size:'medium',
-   pts:[[66.82,26.38],[67.05,26.42],[67.22,26.52],[67.28,26.68],[67.32,26.87]],
+   // Gauging: 26.7914°N 67.3450°E — N of Gaj basin, Dadu dist → Gaj Dam
+   pts:[[66.82,26.78],[67.05,26.78],[67.25,26.79],[67.35,26.79],[67.32,26.88]],
    to:'gajdam',delay:3.2,spd:.11},
   {name:'Nai Gaj',    origin:'kirthar',size:'major',
-   pts:[[66.82,26.90],[67.10,26.88],[67.32,26.87],[67.50,26.62],[67.62,26.38],[67.68,26.42]],
-   to:'manchar',delay:4.0,spd:.12,hasDam:true,damAt:[67.32,26.87]},
+   // Gauging: 26.8755°N 67.3175°E — at Nai Gaj Dam gorge NW of Dadu → Manchar
+   pts:[[66.82,26.90],[67.05,26.90],[67.20,26.89],[67.32,26.88],[67.50,26.60],[67.62,26.42],[67.67,26.42]],
+   to:'manchar',delay:4.0,spd:.12,hasDam:true,damAt:[67.32,26.88]},
   {name:'Nai Ranjo',  origin:'kirthar',size:'medium',
-   pts:[[66.82,25.88],[67.05,25.92],[67.28,26.02],[67.50,26.18],[67.65,26.30],[67.68,26.38]],
+   // Gauging: 26.4912°N 67.2910°E — lower Dadu / Kachho plains → Manchar
+   pts:[[66.82,26.48],[67.05,26.49],[67.29,26.49],[67.45,26.48],[67.58,26.45],[67.67,26.42]],
    to:'manchar',delay:4.8,spd:.11},
   {name:'Nai Chandio',origin:'kirthar',size:'medium',
-   pts:[[66.82,25.62],[67.05,25.65],[67.28,25.76],[67.48,25.92],[67.60,26.12],[67.68,26.38]],
+   // Gauging: 26.2140°N 67.7210°E — E Kirthar slopes, drains toward FP Bund
+   pts:[[66.82,26.22],[67.10,26.21],[67.35,26.20],[67.55,26.20],[67.72,26.21],[67.80,26.32],[67.67,26.42]],
    to:'manchar',delay:5.6,spd:.11},
   {name:'Nai Baran',  origin:'kirthar',size:'major',
-   pts:[[66.82,25.35],[67.05,25.36],[67.30,25.38],[67.55,25.38],[67.75,25.38],[67.92,25.41]],
+   // Gauging: 25.4093°N 67.9426°E — at Darawat Dam structure, Jamshoro dist
+   pts:[[66.82,25.38],[67.10,25.38],[67.40,25.38],[67.65,25.38],[67.85,25.39],[67.94,25.41]],
    to:'darawai',delay:6.4,spd:.10}
 ];
 const WB={
   // Verified coordinates from geographic sources
   hamal:  {lon:67.63,lat:27.45,rxM:18000,ryM:11000,name:'HAMAL LAKE',   sub:'Shallow freshwater · Qambar-Shahdadkot',fill:0},
   manchar:{lon:67.67,lat:26.42,rxM:24000,ryM:20000,name:'MANCHAR LAKE', sub:"Pakistan's Largest Freshwater Lake",fill:0},
-  gajdam: {lon:67.32,lat:26.87,rxM:7000, ryM:4500, name:'NAI GAJ DAM',  sub:'Kirthar gorge · 65 km NW of Dadu',fill:0},
+  gajdam: {lon:67.32,lat:26.88,rxM:7000, ryM:4500, name:'NAI GAJ DAM',  sub:'Kirthar gorge · 65 km NW of Dadu',fill:0},
   darawai:{lon:67.95,lat:25.41,rxM:7000, ryM:4500, name:'DARAWAT DAM',  sub:'Nai Baran · Jhangri · Jamshoro Dist.',fill:0}
 };
 
@@ -672,7 +679,7 @@ const BARRAGES=[
 ];
 
 const DISTS=[{n:'LARKANA',lon:68.20,lat:27.58},{n:'QAMBAR\nSHAHDADKOT',lon:67.50,lat:27.18},{n:'DADU',lon:67.82,lat:26.72},{n:'SEHWAN',lon:68.05,lat:26.43},{n:'JAMSHORO',lon:68.22,lat:25.82}];
-const MTNS=[{n:'KOH-E-SULAIMAN\nRANGE',lon:66.85,lat:28.30},{n:'KIRTHAR\nMOUNTAIN RANGE',lon:66.82,lat:26.50},{n:'LAKI HILLS',lon:67.12,lat:25.28}];
+const MTNS=[{n:'KOH-E-SULAIMAN\nRANGE',lon:66.85,lat:27.80},{n:'KIRTHAR\nMOUNTAIN RANGE',lon:66.82,lat:26.50},{n:'LAKI HILLS',lon:67.12,lat:25.28}];
 
 // ─── KOHISTAN WATERSHED POLYGON ───────────────────────────────────────────
 // Encloses the Hill Torrent plain between the mountain foothills (west) and
