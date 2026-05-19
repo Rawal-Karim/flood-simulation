@@ -535,50 +535,50 @@ function mToPx(m,lat){const z=map.getZoom();return m/(156543.03*Math.cos(lat*Mat
 const NAIS=[
   // ── ALL KIRTHAR RANGE — gauging coords from Sindh Irrigation Dept records ──
   // Each path: Kirthar foothills (lon ~66.82°E) → gauging station → destination
-  // Gauging station = SID measurement point where torrent exits the mountains.
+  // Destinations per SID hydrology: Hamal=Pakho/Dugdu/Khedro · Manchar=Naig/Bhan/Gaj/Ranjo/Chandio · Darawat=Baran
   {name:'Nai Naig',   origin:'kirthar',size:'medium',
-   // Gauging: 26.2731°N 67.4215°E — valley stream 45 km SW Sehwan → Manchar
-   pts:[[66.82,26.25],[67.05,26.26],[67.25,26.27],[67.42,26.27],[67.55,26.35],[67.67,26.42]],
+   // Gauging: 26.2731°N 67.4215°E — 45 km SW Sehwan → Manchar Lake
+   pts:[[66.82,26.25],[67.05,26.26],[67.25,26.27],[67.42,26.27],[67.55,26.35],[67.6747,26.4214]],
    to:'manchar',delay:0,spd:.11},
   {name:'Nai Bhan',   origin:'kirthar',size:'medium',
-   // Gauging: 26.4182°N 67.5510°E — N of Sehwan, Kirthar foothills → Manchar
-   pts:[[66.82,26.40],[67.10,26.41],[67.30,26.41],[67.55,26.42],[67.67,26.42]],
+   // Gauging: 26.4182°N 67.5510°E — N of Sehwan, Kirthar foothills → Manchar Lake
+   pts:[[66.82,26.40],[67.10,26.41],[67.30,26.41],[67.55,26.42],[67.6747,26.4214]],
    to:'manchar',delay:0.8,spd:.11},
   {name:'Nai Pakho',  origin:'kirthar',size:'medium',
-   // Gauging: 26.5891°N 67.4328°E — Qambar-Shahdadkot / Dadu border plains
-   pts:[[66.82,26.58],[67.08,26.58],[67.28,26.59],[67.43,26.59],[67.55,26.62],[67.63,26.70]],
+   // Gauging: 26.5891°N 67.4328°E — Qambar-Shahdadkot / Dadu border → Hamal Lake
+   pts:[[66.82,26.58],[67.08,26.58],[67.28,26.59],[67.43,26.59],[67.52,26.82],[67.58,27.10],[67.62,27.28],[67.6322,27.4348]],
    to:'hamal',delay:1.6,spd:.11},
   {name:'Nai Dugdu',  origin:'kirthar',size:'medium',
-   // Gauging: 26.6945°N 67.3812°E — drains E toward Kachho desert → Hamal
-   pts:[[66.82,26.68],[67.05,26.69],[67.22,26.69],[67.38,26.69],[67.52,26.75],[67.63,26.85]],
+   // Gauging: 26.6945°N 67.3812°E — Kachho plain, drains N into Hamal Lake
+   pts:[[66.82,26.68],[67.05,26.69],[67.22,26.69],[67.38,26.69],[67.48,26.88],[67.55,27.10],[67.60,27.28],[67.6322,27.4348]],
    to:'hamal',delay:2.4,spd:.11},
   {name:'Nai Khedro', origin:'kirthar',size:'medium',
-   // Gauging: 26.7914°N 67.3450°E — N of Gaj basin, Dadu dist → Gaj Dam
-   pts:[[66.82,26.78],[67.05,26.78],[67.25,26.79],[67.35,26.79],[67.32,26.88]],
-   to:'gajdam',delay:3.2,spd:.11},
+   // Gauging: 26.7914°N 67.3450°E — N of Gaj basin → drains N into Hamal Lake
+   pts:[[66.82,26.78],[67.05,26.78],[67.25,26.79],[67.35,26.79],[67.45,27.00],[67.52,27.18],[67.58,27.32],[67.6322,27.4348]],
+   to:'hamal',delay:3.2,spd:.11},
   {name:'Nai Gaj',    origin:'kirthar',size:'major',
-   // Gauging: 26.8755°N 67.3175°E — at Nai Gaj Dam gorge NW of Dadu → Manchar
-   pts:[[66.82,26.90],[67.05,26.90],[67.20,26.89],[67.32,26.88],[67.50,26.60],[67.62,26.42],[67.67,26.42]],
-   to:'manchar',delay:4.0,spd:.12,hasDam:true,damAt:[67.32,26.88]},
+   // Gauging: 26.8731°N 67.3182°E — intercepted by Nai Gaj Dam → Manchar Lake
+   pts:[[66.82,26.90],[67.05,26.90],[67.20,26.88],[67.3182,26.8731],[67.50,26.60],[67.62,26.44],[67.6747,26.4214]],
+   to:'manchar',delay:4.0,spd:.12,hasDam:true,damAt:[67.3182,26.8731]},
   {name:'Nai Ranjo',  origin:'kirthar',size:'medium',
-   // Gauging: 26.4912°N 67.2910°E — lower Dadu / Kachho plains → Manchar
-   pts:[[66.82,26.48],[67.05,26.49],[67.29,26.49],[67.45,26.48],[67.58,26.45],[67.67,26.42]],
+   // Gauging: 26.4912°N 67.2910°E — lower Dadu / Kachho plains → Manchar Lake
+   pts:[[66.82,26.48],[67.05,26.49],[67.29,26.49],[67.45,26.46],[67.58,26.43],[67.6747,26.4214]],
    to:'manchar',delay:4.8,spd:.11},
   {name:'Nai Chandio',origin:'kirthar',size:'medium',
-   // Gauging: 26.2140°N 67.7210°E — E Kirthar slopes, drains toward FP Bund
-   pts:[[66.82,26.22],[67.10,26.21],[67.35,26.20],[67.55,26.20],[67.72,26.21],[67.80,26.32],[67.67,26.42]],
+   // Gauging: 26.2140°N 67.7210°E — E Kirthar slopes → FP Bund → Manchar Lake
+   pts:[[66.82,26.22],[67.10,26.21],[67.35,26.20],[67.55,26.20],[67.72,26.21],[67.78,26.30],[67.6747,26.4214]],
    to:'manchar',delay:5.6,spd:.11},
   {name:'Nai Baran',  origin:'kirthar',size:'major',
-   // Gauging: 25.4093°N 67.9426°E — at Darawat Dam structure, Jamshoro dist
-   pts:[[66.82,25.38],[67.10,25.38],[67.40,25.38],[67.65,25.38],[67.85,25.39],[67.94,25.41]],
+   // Gauging: 25.4093°N 67.9426°E — captured by Darawat Dam, Jamshoro dist
+   pts:[[66.82,25.38],[67.10,25.38],[67.40,25.38],[67.65,25.38],[67.85,25.39],[67.9426,25.4093]],
    to:'darawai',delay:6.4,spd:.10}
 ];
 const WB={
-  // Verified coordinates from geographic sources
-  hamal:  {lon:67.63,lat:27.45,rxM:18000,ryM:11000,name:'HAMAL LAKE',   sub:'Shallow freshwater · Qambar-Shahdadkot',fill:0},
-  manchar:{lon:67.67,lat:26.42,rxM:24000,ryM:20000,name:'MANCHAR LAKE', sub:"Pakistan's Largest Freshwater Lake",fill:0},
-  gajdam: {lon:67.32,lat:26.88,rxM:7000, ryM:4500, name:'NAI GAJ DAM',  sub:'Kirthar gorge · 65 km NW of Dadu',fill:0},
-  darawai:{lon:67.95,lat:25.41,rxM:7000, ryM:4500, name:'DARAWAT DAM',  sub:'Nai Baran · Jhangri · Jamshoro Dist.',fill:0}
+  // Exact coordinates from SID hydrology reference
+  hamal:  {lon:67.6322,lat:27.4348,rxM:18000,ryM:11000,name:'HAMAL LAKE',   sub:'Shallow freshwater · Qambar-Shahdadkot',fill:0},
+  manchar:{lon:67.6747,lat:26.4214,rxM:24000,ryM:20000,name:'MANCHAR LAKE', sub:"Pakistan's Largest Freshwater Lake",fill:0},
+  gajdam: {lon:67.3182,lat:26.8731,rxM:7000, ryM:4500, name:'NAI GAJ DAM',  sub:'Kirthar gorge · 65 km NW of Dadu',fill:0},
+  darawai:{lon:67.9426,lat:25.4093,rxM:7000, ryM:4500, name:'DARAWAT DAM',  sub:'Nai Baran · Jhangri · Jamshoro Dist.',fill:0}
 };
 
 // ─── INDUS: actual meander path — ~65 points traced from satellite imagery ──
