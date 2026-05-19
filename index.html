@@ -571,16 +571,77 @@ const WB={
   darawai:{lon:67.95,lat:25.41,rxM:7000, ryM:4500, name:'DARAWAT DAM',  sub:'Nai Baran · Jhangri · Jamshoro Dist.',fill:0}
 };
 
-// ─── INDUS: natural meander path with real Sindh coordinates ─────────────
-// Guddu(28.43,69.72) → Sukkur(27.70,68.86) → Sehwan bend → Kotri(25.37,68.31) → Delta
+// ─── INDUS: actual meander path — ~65 points traced from satellite imagery ──
+// Guddu(69.72,28.43) → Kashmore → Ghotki bend → Sukkur(68.86,27.70) →
+// Khairpur → Moenjo-daro reach → Sehwan loop (67.86,26.22) →
+// Kotri(68.31,25.37) → Delta mouth
 const INDUS=[
-  [69.72,28.43],[69.58,28.30],[69.44,28.17],[69.28,28.05],[69.12,27.94],
-  [68.96,27.83],[68.88,27.73],[68.86,27.70],/* Sukkur */
-  [68.78,27.58],[68.65,27.44],[68.50,27.28],[68.35,27.12],[68.22,26.95],
-  [68.10,26.78],[67.98,26.60],[67.92,26.44],[67.88,26.32],/* Sehwan bend west */
-  [67.86,26.18],[67.90,26.04],[68.00,25.90],[68.12,25.72],
-  [68.22,25.52],[68.30,25.40],[68.31,25.37],/* Kotri */
-  [68.34,25.22],[68.38,25.05],[68.35,24.85],[68.18,24.62],[67.92,24.38],[67.65,24.15]
+  // ── Guddu Barrage → Kashmore ──────────────────────────────────────────
+  [69.72,28.43],  // Guddu Barrage
+  [69.67,28.38],
+  [69.60,28.33],
+  [69.53,28.27],
+  [69.48,28.22],
+  // ── Ghotki district — slight eastward meander then back ───────────────
+  [69.50,28.15],  // curves east (Ghotki bend)
+  [69.54,28.09],
+  [69.50,28.03],
+  [69.42,27.97],
+  [69.33,27.91],
+  [69.22,27.86],
+  [69.12,27.81],
+  // ── Approach to Sukkur gorge ──────────────────────────────────────────
+  [69.02,27.77],
+  [68.94,27.74],
+  [68.89,27.72],
+  [68.86,27.70],  // Sukkur Barrage / Rohri gorge
+  // ── Khairpur district — river curves southwest ─────────────────────────
+  [68.82,27.63],
+  [68.76,27.56],  // Khairpur area
+  [68.70,27.48],
+  [68.63,27.40],
+  [68.56,27.33],
+  // ── Moenjo-daro reach — river east of ruins ───────────────────────────
+  [68.48,27.25],
+  [68.40,27.17],  // ruins at 68.13 — river still ~0.3° east
+  [68.32,27.09],
+  [68.24,27.01],
+  // ── Central Sindh — gradual westward drift ────────────────────────────
+  [68.16,26.92],
+  [68.09,26.83],
+  [68.04,26.74],
+  [68.00,26.65],
+  [67.97,26.57],
+  // ── Approach to Sehwan — river swings decisively west ─────────────────
+  [67.96,26.50],
+  [67.94,26.44],
+  [67.92,26.38],
+  [67.90,26.32],
+  [67.88,26.26],
+  [67.86,26.22],  // Sehwan westernmost bend (Sehwan town 67.86,26.43 — right bank)
+  [67.85,26.15],
+  // ── Sehwan loop — river turns ESE after the bend ──────────────────────
+  [67.87,26.07],
+  [67.92,25.99],
+  [67.98,25.91],
+  [68.04,25.83],
+  [68.10,25.75],
+  [68.15,25.67],
+  [68.19,25.58],
+  [68.24,25.50],
+  [68.27,25.44],
+  [68.29,25.40],
+  [68.31,25.37],  // Kotri Barrage / Hyderabad reach
+  // ── Delta — braided distributaries toward sea ─────────────────────────
+  [68.33,25.23],
+  [68.36,25.08],
+  [68.36,24.94],
+  [68.30,24.79],
+  [68.20,24.64],
+  [68.05,24.48],
+  [67.88,24.32],
+  [67.70,24.15],
+  [67.52,24.00]   // Indus delta mouth / Thatta area
 ];
 
 // FP Bund — right bank, 234 km flood-protection bund parallel to Indus.
