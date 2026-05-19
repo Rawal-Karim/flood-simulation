@@ -1552,7 +1552,7 @@ map.on('load',()=>{
   };
 })();
 
-/* ── Audio Guide (MP3 — Urdu narration) ── */
+/* ── Audio Guide (MP3 — Urdu narration + camera sync) ── */
 (function(){
   const SEGMENTS=[
     {label:'مقصد',
@@ -1580,6 +1580,72 @@ map.on('load',()=>{
      text:'دو ہزار بائیس میں بارش اوسط سے سات سو چھبیس فیصد زیادہ تھی۔ دو ہزار پچیس میں دریائے سندھ تین ہفتوں میں دو بار عروج پر پہنچا۔ بند اور بیراج سیلاب کو سست کرتے ہیں، روکتے نہیں۔',
      src:'audio/seg8.mp3'}
   ];
+
+  /* ── Camera choreography ─────────────────────────────────────────────── */
+  // Default view to restore after tour ends
+  const CAM_DEFAULT={center:[67.35,26.50],zoom:7.2,pitch:48,bearing:-5,duration:3500};
+
+  // Opening camera position for each segment (index matches SEGMENTS)
+  const SEG_CAM=[
+    {center:[67.60,26.55],zoom:6.3, pitch:30,bearing:-5, duration:3500}, // 0 مقصد      — wide overview
+    {center:[67.05,26.80],zoom:7.2, pitch:52,bearing:-25,duration:3500}, // 1 ڈیٹا      — Kirthar terrain
+    {center:[67.00,26.70],zoom:7.0, pitch:50,bearing:-20,duration:3000}, // 2 نقشہ      — mountains (sweep follows)
+    {center:[67.85,26.85],zoom:7.8, pitch:35,bearing:5,  duration:3000}, // 3 بائیں پینل — lakes
+    {center:[68.10,26.20],zoom:7.5, pitch:30,bearing:15, duration:3000}, // 4 دائیں پینل — FP Bund / canals
+    {center:[68.30,25.60],zoom:8.0, pitch:25,bearing:5,  duration:3000}, // 5 چارٹ      — Kotri / lower Indus
+    {center:[67.20,27.45],zoom:7.8, pitch:52,bearing:-10,duration:3000}, // 6 طغیانی    — north Nais (pan follows)
+    {center:[67.80,26.30],zoom:6.8, pitch:42,bearing:-8, duration:4000}  // 7 اہمیت     — wide final view
+  ];
+
+  // Sub-moves within a segment: [{pct, cam}] fired at that fraction of audio duration
+  // pct=0.45 means at 45% of the segment's playback time
+  const SEG_SUBMOVES=[
+    null, // 0
+    null, // 1
+    [ // 2 نقشہ — sweep west→east: mountains → plain → Indus
+      {pct:0.45,cam:{center:[68.05,26.50],zoom:7.0,pitch:40,bearing:12,duration:3500}}
+    ],
+    null, // 3
+    null, // 4
+    null, // 5
+    [ // 6 طغیانی — slow north→south following each Nai group
+      {pct:0.28,cam:{center:[67.40,26.90],zoom:7.6,pitch:50,bearing:-8, duration:4500}},
+      {pct:0.55,cam:{center:[67.65,26.15],zoom:7.5,pitch:48,bearing:-5, duration:4500}},
+      {pct:0.82,cam:{center:[67.88,25.45],zoom:7.8,pitch:45,bearing:-3, duration:3500}}
+    ],
+    null  // 7
+  ];
+
+  let camTimers=[];
+  function clearCamTimers(){camTimers.forEach(clearTimeout);camTimers=[];}
+
+  function flyToSeg(i){
+    clearCamTimers();
+    if(typeof map==='undefined'||!map)return;
+    map.easeTo(SEG_CAM[i]);
+    const submoves=SEG_SUBMOVES[i];
+    if(!submoves)return;
+    function scheduleSubMoves(){
+      const dur=audio.duration;
+      if(!dur||!isFinite(dur))return;
+      submoves.forEach(function(sm){
+        camTimers.push(setTimeout(function(){
+          if(playing)map.easeTo(sm.cam);
+        },Math.round(sm.pct*dur*1000)));
+      });
+    }
+    if(audio.duration&&isFinite(audio.duration)){
+      scheduleSubMoves();
+    }else{
+      audio.addEventListener('durationchange',scheduleSubMoves,{once:true});
+    }
+  }
+
+  function restoreCamera(){
+    clearCamTimers();
+    if(typeof map!=='undefined'&&map)map.easeTo(CAM_DEFAULT);
+  }
+  /* ────────────────────────────────────────────────────────────────────── */
 
   let cur=0,playing=false,progTimer=null;
 
@@ -1625,6 +1691,7 @@ map.on('load',()=>{
     audio.play().then(function(){
       playing=true;
       startProgress();
+      flyToSeg(cur);   // ← trigger camera for this segment
       render();
     }).catch(function(){
       playing=false;render();
@@ -1638,7 +1705,9 @@ map.on('load',()=>{
       cur++;
       setTimeout(loadAndPlay,500);
     } else {
-      playing=false;render();
+      playing=false;
+      restoreCamera();  // ← return to default view when tour finishes
+      render();
     }
   });
 
@@ -1650,13 +1719,16 @@ map.on('load',()=>{
   function pause(){
     audio.pause();
     clearInterval(progTimer);
+    clearCamTimers();   // ← stop any pending sub-moves
     playing=false;render();
   }
 
   function resume(){
     if(audio.src&&audio.paused&&audio.currentTime>0){
       audio.play().then(function(){
-        playing=true;startProgress();render();
+        playing=true;startProgress();
+        flyToSeg(cur);  // ← re-trigger camera on resume
+        render();
       });
     } else {
       loadAndPlay();
@@ -1667,7 +1739,10 @@ map.on('load',()=>{
     player.classList.toggle('open');
     if(!player.classList.contains('open')){
       audio.pause();audio.currentTime=0;
-      clearInterval(progTimer);playing=false;
+      clearInterval(progTimer);
+      clearCamTimers();
+      restoreCamera();  // ← restore camera when panel is closed
+      playing=false;
     }
     render();
   });
@@ -1678,13 +1753,13 @@ map.on('load',()=>{
 
   prevBtn.addEventListener('click',function(){
     audio.pause();audio.currentTime=0;
-    clearInterval(progTimer);
+    clearInterval(progTimer);clearCamTimers();
     cur=Math.max(cur-1,0);playing=false;render();
   });
 
   nextBtn.addEventListener('click',function(){
     audio.pause();audio.currentTime=0;
-    clearInterval(progTimer);
+    clearInterval(progTimer);clearCamTimers();
     cur=Math.min(cur+1,SEGMENTS.length-1);playing=false;render();
   });
 
