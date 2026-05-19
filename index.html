@@ -1581,20 +1581,24 @@ map.on('load',()=>{
      src:'audio/seg8.mp3'}
   ];
 
-  /* ── Camera choreography — close-ups + flyovers ────────────────────── */
+  /* ── Camera choreography — smooth flyovers, 2D/3D mix ──────────────── */
   // Durations: seg1=33.5s seg2=39.1s seg3=25.2s seg4=28.3s
   //            seg5=34.4s seg6=34.8s seg7=34.8s seg8=30.5s
-  // fly:true  → map.flyTo() — cinematic zoom-out arc between distant points
-  // fly:false → map.easeTo() — smooth pan/tilt for nearby moves
-  // Bearing: 0=north 90=east 180=south -90=west (aligned with direction of travel)
-  // pitch cap: 48° max to keep canvas Nais in frustum
+  //
+  // 2D (pitch  0-12°) — top-down map feel: Nai paths, canals, bund, barrages
+  // 3D (pitch 30-48°) — terrain, mountains, surge, wide landscape
+  // easeTo  — smooth linear, used for almost everything
+  // flyTo   — cinematic arc, max 2x per segment, slow speed 0.45-0.52
+  // Zoom range: 6.5-8.8 (no extremes)
 
   const CAM_DEFAULT={center:[67.35,26.50],zoom:7.2,pitch:48,bearing:-5,duration:3500};
 
   function camMove(opts){
     if(opts.fly){
-      var o=Object.assign({},opts);delete o.fly;
-      o.speed=o.speed||0.75;o.curve=o.curve||1.2;
+      var o=Object.assign({},opts);
+      delete o.fly;
+      o.speed=o.speed||0.5;
+      o.curve=1.2;
       map.flyTo(o);
     }else{
       map.easeTo(opts);
@@ -1602,127 +1606,108 @@ map.on('load',()=>{
   }
 
   const SEG_CAM=[
-    {center:[67.60,26.55],zoom:6.0, pitch:25,bearing:-5,  duration:4000},           // 0 wide pullback
-    {center:[67.20,26.80],zoom:6.8, pitch:42,bearing:-18, fly:true, speed:0.7},     // 1 terrain tilt
-    {center:[67.35,26.50],zoom:6.8, pitch:45,bearing:-5,  duration:3000},           // 2 panorama
-    {center:[67.50,26.60],zoom:7.3, pitch:38,bearing:-8,  duration:3000},           // 3 central
-    {center:[68.10,26.20],zoom:7.5, pitch:30,bearing:15,  fly:true, speed:0.7},     // 4 fly east
-    {center:[68.30,25.80],zoom:7.8, pitch:22,bearing:5,   duration:3000},           // 5 Kotri zone
-    {center:[67.20,27.45],zoom:7.8, pitch:48,bearing:-10, fly:true, speed:0.7},     // 6 north Nais
-    {center:[67.90,26.20],zoom:7.5, pitch:38,bearing:-5,  fly:true, speed:0.65}     // 7 FP Bund
+    {center:[67.55,26.50],zoom:6.8,pitch:32,bearing:-5,  duration:4000},       // 0 مقصد
+    {center:[67.20,26.80],zoom:7.0,pitch:42,bearing:-18, fly:true,speed:0.52}, // 1 ڈیٹا
+    {center:[67.35,26.50],zoom:6.8,pitch:45,bearing:-5,  duration:3500},       // 2 نقشہ
+    {center:[67.50,26.60],zoom:7.2,pitch:38,bearing:-8,  duration:3500},       // 3 بائیں پینل
+    {center:[68.10,26.20],zoom:7.3,pitch:28,bearing:12,  fly:true,speed:0.5},  // 4 دائیں پینل
+    {center:[68.28,25.75],zoom:7.8,pitch:20,bearing:5,   duration:3500},       // 5 چارٹ 2D
+    {center:[67.20,27.45],zoom:7.8,pitch:45,bearing:-10, fly:true,speed:0.52}, // 6 طغیانی
+    {center:[67.90,26.20],zoom:7.5,pitch:36,bearing:-5,  fly:true,speed:0.48}  // 7 اہمیت
   ];
 
   const SEG_SUBMOVES=[
 
     // 0  (33.5s)
     [
-      {pct:0.10,fly:true, center:[66.92,27.55],zoom:9.0,pitch:35,bearing:-25,speed:0.9},
-      {pct:0.21,fly:false,center:[67.15,26.85],zoom:6.9,pitch:42,bearing:-18,duration:2500},
-      {pct:0.35,fly:false,center:[67.70,26.55],zoom:7.5,pitch:15,bearing:85, duration:3000},
-      {pct:0.47,fly:false,center:[67.65,26.50],zoom:8.5,pitch:28,bearing:0,  duration:2500},
-      {pct:0.57,fly:false,center:[67.50,26.50],zoom:7.0,pitch:38,bearing:-5, duration:2500},
-      {pct:0.68,fly:false,center:[67.40,26.40],zoom:6.6,pitch:40,bearing:-8, duration:2500},
-      {pct:0.78,fly:false,center:[67.80,26.20],zoom:6.2,pitch:30,bearing:-10,duration:2800}
+      {pct:0.18,fly:false,center:[67.10,26.90],zoom:7.2,pitch:42,bearing:-20,duration:3800},
+      {pct:0.35,fly:false,center:[67.60,26.55],zoom:7.8,pitch:12,bearing:85, duration:4000},
+      {pct:0.52,fly:false,center:[67.55,26.50],zoom:8.5,pitch:8, bearing:0,  duration:3500},
+      {pct:0.65,fly:false,center:[67.50,26.50],zoom:7.0,pitch:38,bearing:-5, duration:3500},
+      {pct:0.80,fly:false,center:[67.75,26.25],zoom:6.5,pitch:30,bearing:-8, duration:3500}
     ],
 
     // 1  (39.1s)
     [
-      {pct:0.07,fly:false,center:[67.05,26.90],zoom:7.2,pitch:48,bearing:-25,duration:2500},
-      {pct:0.14,fly:true, center:[66.90,26.95],zoom:9.0,pitch:40,bearing:-20,speed:1.0},
-      {pct:0.23,fly:false,center:[67.25,26.80],zoom:7.3,pitch:45,bearing:-12,duration:2500},
-      {pct:0.30,fly:false,center:[67.55,26.75],zoom:8.0,pitch:18,bearing:82, duration:3000},
-      {pct:0.42,fly:true, center:[68.15,26.30],zoom:7.0,pitch:28,bearing:5,  speed:0.8},
-      {pct:0.50,fly:true, center:[68.35,25.38],zoom:9.5,pitch:20,bearing:2,  speed:0.9},
-      {pct:0.58,fly:false,center:[68.28,25.10],zoom:8.0,pitch:16,bearing:175,duration:3000},
-      {pct:0.70,fly:false,center:[68.05,25.00],zoom:7.8,pitch:22,bearing:12, duration:2500},
-      {pct:0.82,fly:false,center:[67.50,26.20],zoom:6.8,pitch:35,bearing:-5, duration:2800}
+      {pct:0.10,fly:false,center:[67.00,26.95],zoom:7.8,pitch:46,bearing:-22,duration:3800},
+      {pct:0.22,fly:false,center:[66.95,27.00],zoom:8.5,pitch:40,bearing:-18,duration:4000},
+      {pct:0.33,fly:false,center:[67.30,26.80],zoom:7.5,pitch:8, bearing:0,  duration:4000},
+      {pct:0.46,fly:false,center:[68.15,26.25],zoom:7.2,pitch:10,bearing:5,  duration:3800},
+      {pct:0.56,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.48},
+      {pct:0.72,fly:false,center:[68.05,25.05],zoom:7.8,pitch:8, bearing:10, duration:3800},
+      {pct:0.86,fly:false,center:[67.50,26.20],zoom:6.8,pitch:35,bearing:-5, duration:3500}
     ],
 
     // 2  (25.2s)
     [
-      {pct:0.19,fly:true, center:[66.88,26.92],zoom:8.5,pitch:45,bearing:-35,speed:1.0},
-      {pct:0.25,fly:false,center:[67.10,26.85],zoom:8.0,pitch:18,bearing:88, duration:2800},
-      {pct:0.28,fly:true, center:[68.25,26.40],zoom:7.2,pitch:30,bearing:18, speed:0.85},
-      {pct:0.38,fly:false,center:[68.30,27.00],zoom:8.0,pitch:16,bearing:2,  duration:3000},
-      {pct:0.45,fly:true, center:[67.45,26.55],zoom:7.0,pitch:40,bearing:-5, speed:0.8},
-      {pct:0.56,fly:false,center:[67.65,26.40],zoom:8.2,pitch:15,bearing:5,  duration:3000},
-      {pct:0.70,fly:false,center:[67.50,26.40],zoom:6.8,pitch:38,bearing:-8, duration:2500},
-      {pct:0.84,fly:false,center:[67.35,26.50],zoom:6.9,pitch:42,bearing:-5, duration:2200}
+      {pct:0.19,fly:false,center:[66.95,26.80],zoom:7.8,pitch:46,bearing:-28,duration:3500},
+      {pct:0.30,fly:true, center:[68.22,26.45],zoom:7.2,pitch:18,bearing:12, speed:0.5},
+      {pct:0.46,fly:false,center:[67.45,26.55],zoom:7.8,pitch:8, bearing:0,  duration:4000},
+      {pct:0.58,fly:false,center:[67.60,26.42],zoom:8.2,pitch:12,bearing:5,  duration:3800},
+      {pct:0.78,fly:false,center:[67.35,26.50],zoom:7.0,pitch:40,bearing:-5, duration:3500}
     ],
 
     // 3  (28.3s)
     [
-      {pct:0.11,fly:false,center:[67.40,26.50],zoom:7.0,pitch:42,bearing:-5, duration:2500},
-      {pct:0.22,fly:false,center:[67.35,26.55],zoom:6.9,pitch:40,bearing:-5, duration:2000},
-      {pct:0.30,fly:true, center:[66.92,27.58],zoom:9.2,pitch:32,bearing:-80,speed:1.0},
-      {pct:0.38,fly:false,center:[67.45,27.50],zoom:8.0,pitch:18,bearing:82, duration:2800},
-      {pct:0.44,fly:true, center:[68.05,26.35],zoom:9.0,pitch:28,bearing:8,  speed:0.9},
-      {pct:0.54,fly:true, center:[68.35,25.38],zoom:9.5,pitch:18,bearing:0,  speed:0.9},
-      {pct:0.63,fly:true, center:[67.70,26.60],zoom:7.2,pitch:35,bearing:-5, speed:0.8},
-      {pct:0.71,fly:false,center:[67.82,26.85],zoom:7.8,pitch:35,bearing:5,  duration:2500},
-      {pct:0.83,fly:true, center:[67.90,27.22],zoom:9.0,pitch:30,bearing:5,  speed:1.0}
+      {pct:0.14,fly:false,center:[67.40,26.50],zoom:7.0,pitch:38,bearing:-5, duration:3500},
+      {pct:0.28,fly:false,center:[67.22,26.85],zoom:7.8,pitch:5, bearing:0,  duration:3800},
+      {pct:0.44,fly:false,center:[68.02,26.32],zoom:8.5,pitch:5, bearing:5,  duration:3800},
+      {pct:0.57,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.5},
+      {pct:0.70,fly:false,center:[67.82,26.85],zoom:7.8,pitch:35,bearing:5,  duration:3800},
+      {pct:0.84,fly:false,center:[67.90,27.20],zoom:8.5,pitch:28,bearing:5,  duration:3500}
     ],
 
     // 4  (34.4s)
     [
-      {pct:0.17,fly:true, center:[67.22,27.40],zoom:9.0,pitch:38,bearing:-82,speed:1.0},
-      {pct:0.24,fly:false,center:[67.48,27.45],zoom:8.0,pitch:18,bearing:80, duration:2800},
-      {pct:0.31,fly:true, center:[68.05,26.28],zoom:9.0,pitch:28,bearing:10, speed:0.9},
-      {pct:0.38,fly:false,center:[68.08,25.85],zoom:8.2,pitch:18,bearing:178,duration:3000},
-      {pct:0.45,fly:true, center:[68.10,25.35],zoom:8.5,pitch:22,bearing:12, speed:0.9},
-      {pct:0.56,fly:true, center:[69.71,28.43],zoom:9.5,pitch:18,bearing:0,  speed:0.65},
-      {pct:0.63,fly:true, center:[68.87,27.71],zoom:9.5,pitch:18,bearing:0,  speed:0.8},
-      {pct:0.70,fly:true, center:[68.35,25.38],zoom:9.5,pitch:18,bearing:0,  speed:0.8},
-      {pct:0.76,fly:true, center:[67.50,26.80],zoom:7.0,pitch:35,bearing:-10,speed:0.7},
-      {pct:0.87,fly:false,center:[67.70,25.70],zoom:7.2,pitch:33,bearing:-5, duration:2800}
+      {pct:0.16,fly:false,center:[67.22,27.25],zoom:8.0,pitch:5, bearing:0,  duration:4000},
+      {pct:0.30,fly:false,center:[68.05,26.22],zoom:8.2,pitch:5, bearing:5,  duration:4000},
+      {pct:0.40,fly:false,center:[68.08,25.90],zoom:7.8,pitch:15,bearing:178,duration:4000},
+      {pct:0.46,fly:false,center:[68.10,25.35],zoom:8.0,pitch:5, bearing:8,  duration:3500},
+      {pct:0.56,fly:true, center:[69.71,28.43],zoom:8.5,pitch:5, bearing:0,  speed:0.45},
+      {pct:0.64,fly:false,center:[68.87,27.71],zoom:8.5,pitch:5, bearing:0,  duration:3500},
+      {pct:0.71,fly:false,center:[68.35,25.38],zoom:8.5,pitch:5, bearing:0,  duration:3500},
+      {pct:0.80,fly:false,center:[67.50,26.75],zoom:7.0,pitch:35,bearing:-10,duration:3800},
+      {pct:0.90,fly:false,center:[67.68,25.75],zoom:7.2,pitch:32,bearing:-5, duration:3500}
     ],
 
     // 5  (34.8s)
     [
-      {pct:0.13,fly:false,center:[68.30,26.20],zoom:8.0,pitch:16,bearing:178,duration:3500},
-      {pct:0.20,fly:true, center:[68.35,25.38],zoom:9.5,pitch:18,bearing:2,  speed:1.0},
-      {pct:0.27,fly:false,center:[68.35,25.38],zoom:9.0,pitch:30,bearing:90, duration:2500},
-      {pct:0.30,fly:true, center:[67.80,26.00],zoom:6.8,pitch:35,bearing:-5, speed:0.75},
-      {pct:0.42,fly:true, center:[68.35,27.20],zoom:7.8,pitch:25,bearing:5,  speed:0.8},
-      {pct:0.47,fly:false,center:[68.30,26.50],zoom:7.5,pitch:28,bearing:5,  duration:2500},
-      {pct:0.56,fly:true, center:[68.35,25.38],zoom:9.5,pitch:18,bearing:180,speed:1.0},
-      {pct:0.67,fly:true, center:[67.72,26.42],zoom:8.8,pitch:35,bearing:5,  speed:0.8},
-      {pct:0.76,fly:false,center:[67.68,26.45],zoom:9.0,pitch:22,bearing:-15,duration:2500},
-      {pct:0.89,fly:true, center:[67.50,26.00],zoom:6.5,pitch:38,bearing:-5, speed:0.7}
+      {pct:0.14,fly:false,center:[68.28,25.20],zoom:7.8,pitch:10,bearing:178,duration:4500},
+      {pct:0.22,fly:false,center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  duration:3500},
+      {pct:0.32,fly:false,center:[67.80,26.00],zoom:7.0,pitch:35,bearing:-5, duration:4000},
+      {pct:0.46,fly:false,center:[68.30,27.00],zoom:7.5,pitch:10,bearing:0,  duration:3800},
+      {pct:0.56,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.48},
+      {pct:0.68,fly:false,center:[67.72,26.42],zoom:8.5,pitch:32,bearing:5,  duration:3800},
+      {pct:0.80,fly:false,center:[67.70,26.44],zoom:8.5,pitch:8, bearing:0,  duration:3500},
+      {pct:0.90,fly:false,center:[67.50,26.00],zoom:6.8,pitch:36,bearing:-5, duration:3500}
     ],
 
     // 6  (34.8s)
     [
-      {pct:0.25,fly:true, center:[66.92,27.58],zoom:9.2,pitch:40,bearing:-80,speed:1.0},
-      {pct:0.29,fly:false,center:[67.45,27.52],zoom:8.0,pitch:18,bearing:82, duration:2500},
-      {pct:0.34,fly:true, center:[66.92,27.10],zoom:9.0,pitch:40,bearing:-80,speed:1.0},
-      {pct:0.38,fly:false,center:[67.45,27.15],zoom:8.0,pitch:18,bearing:82, duration:2200},
-      {pct:0.41,fly:true, center:[66.92,26.62],zoom:9.0,pitch:42,bearing:-78,speed:1.0},
-      {pct:0.44,fly:false,center:[67.40,26.65],zoom:8.2,pitch:18,bearing:82, duration:2000},
-      {pct:0.47,fly:true, center:[67.32,26.87],zoom:9.8,pitch:35,bearing:-8, speed:1.0},
-      {pct:0.50,fly:false,center:[67.32,26.87],zoom:9.2,pitch:28,bearing:25, duration:2000},
-      {pct:0.53,fly:true, center:[66.92,25.88],zoom:9.0,pitch:40,bearing:-78,speed:1.0},
-      {pct:0.57,fly:true, center:[66.92,25.35],zoom:9.0,pitch:40,bearing:-78,speed:1.0},
-      {pct:0.61,fly:false,center:[67.60,25.38],zoom:8.0,pitch:18,bearing:85, duration:2500},
-      {pct:0.67,fly:true, center:[67.60,26.55],zoom:7.0,pitch:40,bearing:-8, speed:0.75},
-      {pct:0.74,fly:false,center:[67.65,26.45],zoom:8.5,pitch:14,bearing:5,  duration:3000},
-      {pct:0.82,fly:true, center:[67.50,26.40],zoom:6.5,pitch:35,bearing:-8, speed:0.75}
+      {pct:0.25,fly:false,center:[66.95,27.58],zoom:8.5,pitch:5, bearing:90, duration:3500},
+      {pct:0.30,fly:false,center:[67.42,27.50],zoom:8.0,pitch:14,bearing:84, duration:4000},
+      {pct:0.35,fly:false,center:[66.95,27.12],zoom:8.5,pitch:5, bearing:90, duration:3200},
+      {pct:0.41,fly:false,center:[66.95,26.60],zoom:8.5,pitch:5, bearing:90, duration:3200},
+      {pct:0.47,fly:false,center:[67.32,26.87],zoom:8.8,pitch:36,bearing:-8, duration:3500},
+      {pct:0.53,fly:false,center:[66.95,25.90],zoom:8.5,pitch:5, bearing:90, duration:3200},
+      {pct:0.58,fly:false,center:[67.45,25.38],zoom:8.0,pitch:14,bearing:84, duration:3500},
+      {pct:0.67,fly:false,center:[67.60,26.55],zoom:7.0,pitch:40,bearing:-8, duration:4000},
+      {pct:0.78,fly:false,center:[67.62,26.45],zoom:8.0,pitch:10,bearing:5,  duration:3800},
+      {pct:0.88,fly:false,center:[67.50,26.40],zoom:6.8,pitch:35,bearing:-8, duration:3500}
     ],
 
     // 7  (30.5s)
     [
-      {pct:0.08,fly:true, center:[68.00,26.32],zoom:9.5,pitch:28,bearing:8,  speed:1.0},
-      {pct:0.13,fly:false,center:[68.05,25.95],zoom:8.2,pitch:18,bearing:178,duration:3000},
-      {pct:0.16,fly:true, center:[67.90,27.22],zoom:9.0,pitch:32,bearing:5,  speed:1.0},
-      {pct:0.21,fly:true, center:[67.72,26.42],zoom:9.0,pitch:32,bearing:5,  speed:0.9},
-      {pct:0.26,fly:false,center:[67.65,26.52],zoom:8.5,pitch:16,bearing:-12,duration:2800},
-      {pct:0.31,fly:true, center:[67.50,26.50],zoom:5.8,pitch:28,bearing:-10,speed:0.65},
-      {pct:0.42,fly:false,center:[67.65,26.40],zoom:8.2,pitch:15,bearing:0,  duration:3500},
-      {pct:0.50,fly:true, center:[68.25,25.80],zoom:7.8,pitch:26,bearing:5,  speed:0.8},
-      {pct:0.58,fly:true, center:[68.35,25.38],zoom:9.5,pitch:18,bearing:0,  speed:0.9},
-      {pct:0.69,fly:true, center:[68.05,26.20],zoom:7.2,pitch:32,bearing:8,  speed:0.75},
-      {pct:0.78,fly:false,center:[68.10,26.60],zoom:8.0,pitch:18,bearing:2,  duration:3000},
-      {pct:0.86,fly:true, center:[67.60,26.40],zoom:6.2,pitch:32,bearing:-8, speed:0.65}
+      {pct:0.10,fly:false,center:[68.02,26.32],zoom:8.8,pitch:5, bearing:5,  duration:3800},
+      {pct:0.18,fly:false,center:[67.88,27.20],zoom:8.5,pitch:30,bearing:5,  duration:3200},
+      {pct:0.24,fly:false,center:[67.72,26.42],zoom:8.5,pitch:30,bearing:5,  duration:3200},
+      {pct:0.33,fly:false,center:[67.50,26.50],zoom:6.5,pitch:28,bearing:-10,duration:4000},
+      {pct:0.46,fly:false,center:[67.62,26.42],zoom:8.0,pitch:8, bearing:0,  duration:4000},
+      {pct:0.53,fly:false,center:[68.25,25.80],zoom:7.8,pitch:10,bearing:5,  duration:3500},
+      {pct:0.60,fly:true, center:[68.35,25.38],zoom:8.8,pitch:5, bearing:0,  speed:0.5},
+      {pct:0.70,fly:false,center:[68.05,26.20],zoom:7.2,pitch:32,bearing:8,  duration:4000},
+      {pct:0.82,fly:false,center:[68.08,26.65],zoom:7.8,pitch:14,bearing:2,  duration:3500},
+      {pct:0.90,fly:false,center:[67.60,26.40],zoom:6.5,pitch:32,bearing:-8, duration:3500}
     ]
   ];
 
@@ -1753,9 +1738,9 @@ map.on('load',()=>{
 
   function restoreCamera(){
     clearCamTimers();
-    if(typeof map!=='undefined'&&map)map.flyTo({center:[67.35,26.50],zoom:7.2,pitch:48,bearing:-5,speed:0.6});
+    if(typeof map!=='undefined'&&map)
+      map.flyTo({center:[67.35,26.50],zoom:7.2,pitch:48,bearing:-5,speed:0.5});
   }
-
 
   let cur=0,playing=false,progTimer=null;
 
