@@ -48,7 +48,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 .li-ic{margin-right:8px;flex-shrink:0;transition:all .4s}
 .li-tx{font-size:8.5px;color:rgba(185,215,245,.82)}
 .li-tx small{display:block;font-size:7px;color:rgba(120,165,205,.58);margin-top:1px}
-#bottom-panel{position:absolute;bottom:0;left:0;right:0;height:140px;background:rgba(6,16,40,.92);border-top:2px solid rgba(41,182,246,.22);z-index:20;display:flex}
+#bottom-panel{position:absolute;bottom:0;left:0;right:0;height:140px;background:rgba(6,16,40,.92);border-top:2px solid rgba(41,182,246,.22);z-index:20;display:flex;flex-direction:column}
+#chart-row{display:flex;flex:1;min-height:0}
 #chart-wrap{flex:1;min-width:0;padding:9px 16px;display:flex;flex-direction:column}
 #ch-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:5px}
 #ch-title{font-size:7px;color:rgba(41,182,246,.8);letter-spacing:2px;text-transform:uppercase}
@@ -233,8 +234,10 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 
   /* Bottom panel: compact strip */
   #bottom-panel{
-    height:72px;flex-direction:row;
+    height:72px;flex-direction:column;
   }
+  #chart-row{flex:1;min-height:0;display:flex}
+  #impact-strip{min-height:22px;padding:3px 10px;font-size:9px}
   #chart-wrap{padding:6px 12px}
   #ch-title{font-size:6px;letter-spacing:1px}
   #dis-big{font-size:15px}
@@ -314,47 +317,31 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 .ctog:hover{color:#fff}
 .card-collapsed .ctog{transform:rotate(-90deg)}
 
-/* ── Impact Counter Panel ─────────────────────────────────────────────────── */
-#impact-panel{
-  position:fixed;bottom:148px;left:50%;transform:translateX(-50%);
-  background:rgba(60,5,5,.91);border:1px solid rgba(239,83,80,.55);
-  border-radius:12px;padding:11px 18px 9px;backdrop-filter:blur(16px);
-  color:#fff;width:min(680px,94vw);z-index:820;
-  opacity:0;transition:opacity .7s ease;pointer-events:none;
+/* ── Impact strip — single cycling bar inside bottom panel ───────────────── */
+#impact-strip{
+  display:none;align-items:center;padding:5px 14px;gap:0;
+  background:rgba(70,4,4,.88);border-bottom:1px solid rgba(239,83,80,.28);
+  min-height:30px;overflow:hidden;flex-shrink:0;
 }
-#impact-panel.vis{opacity:1;}
-.imp-hdr{font-size:10px;letter-spacing:2.5px;color:#ff5252;font-weight:700;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;}
-.imp-hdr span{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.5px;font-weight:400;}
-.imp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-.imp-cell{text-align:center;padding:6px 4px;background:rgba(255,255,255,.05);border-radius:7px;}
-.imp-val{font-size:20px;font-weight:700;color:#ff8a80;line-height:1.1;font-variant-numeric:tabular-nums;}
-.imp-key{font-size:9px;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.6px;text-transform:uppercase;}
-.imp-src{font-size:8.5px;color:rgba(255,255,255,.3);margin-top:7px;text-align:right;font-style:italic;}
-
-/* ── District Impact Cards (slide-in from right) ─────────────────────────── */
-#dist-cards{position:fixed;top:72px;right:10px;z-index:910;display:flex;flex-direction:column;gap:7px;pointer-events:none;max-width:270px;}
-.dc{
-  background:rgba(6,12,30,.93);border-left:3px solid #f44336;
-  border-radius:0 9px 9px 0;padding:9px 13px;
-  backdrop-filter:blur(14px);
-  transform:translateX(300px);transition:transform .5s cubic-bezier(.23,1,.32,1),opacity .5s;
-  opacity:0;color:#fff;
-}
-.dc.show{transform:translateX(0);opacity:1;}
-.dc-head{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
-.dc-icon{font-size:15px;}
-.dc-title{font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:#ff5252;}
-.dc-body{font-size:10.5px;color:rgba(255,255,255,.75);line-height:1.5;margin-bottom:5px;}
-.dc-stats{display:flex;gap:5px;flex-wrap:wrap;}
-.dc-stat{font-size:9.5px;background:rgba(244,67,54,.14);border-radius:4px;padding:2px 6px;color:#ffab91;}
+#impact-strip.vis{display:flex;}
+.is-badge{font-size:8.5px;font-weight:700;letter-spacing:2px;color:#ff5252;
+  background:rgba(244,67,54,.22);border-radius:4px;padding:2px 7px;
+  margin-right:10px;white-space:nowrap;flex-shrink:0;}
+.is-content{display:flex;align-items:center;gap:0;flex:1;overflow:hidden;white-space:nowrap;}
+.is-name{font-size:11px;font-weight:700;color:#fff;margin-right:0;}
+.is-sep{color:rgba(255,255,255,.22);margin:0 7px;flex-shrink:0;}
+.is-stat{font-size:10px;color:rgba(255,195,175,.82);}
+.is-dots{display:flex;gap:4px;margin-left:12px;flex-shrink:0;}
+.is-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18);transition:background .3s;}
+.is-dot.act{background:rgba(239,83,80,.9);}
 
 /* ── Bund breach badge ───────────────────────────────────────────────────── */
 #breach-badge{
-  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-  background:rgba(180,0,0,.92);border:2px solid #ff1744;border-radius:10px;
-  padding:8px 18px;color:#fff;font-size:13px;font-weight:700;letter-spacing:2px;
-  z-index:950;opacity:0;transition:opacity .5s;pointer-events:none;
-  text-align:center;
+  position:fixed;top:58px;left:50%;transform:translateX(-50%);
+  background:rgba(160,0,0,.92);border:1.5px solid rgba(255,23,68,.7);border-radius:8px;
+  padding:6px 16px;color:#fff;font-size:11px;font-weight:700;letter-spacing:1.5px;
+  z-index:950;opacity:0;transition:opacity .5s;pointer-events:none;text-align:center;
+  white-space:nowrap;
 }
 #breach-badge.vis{opacity:1;}
 </style>
@@ -437,26 +424,29 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 </div>
 
 <div id="bottom-panel">
-  <div id="chart-wrap">
-    <div id="ch-hdr">
-      <div><div id="ch-title">Indus River Discharge (Cusecs)</div>
-        <div style="margin-top:1px"><span id="dis-big">95,000</span><span id="dis-unit">cusecs</span><span id="dis-stage" style="background:rgba(67,160,71,.25);color:#66bb6a">NORMAL</span></div>
+  <div id="impact-strip"></div>
+  <div id="chart-row">
+    <div id="chart-wrap">
+      <div id="ch-hdr">
+        <div><div id="ch-title">Indus River Discharge (Cusecs)</div>
+          <div style="margin-top:1px"><span id="dis-big">95,000</span><span id="dis-unit">cusecs</span><span id="dis-stage" style="background:rgba(67,160,71,.25);color:#66bb6a">NORMAL</span></div>
+        </div>
+        <div style="text-align:right;font-size:7.5px;color:rgba(100,150,195,.5);line-height:1.8">
+          <div>Peak 1 · <span style="color:#ff9800">543,184</span> cfs · 24 Aug 2025</div>
+          <div>Peak 2 · <span style="color:#ef5350">635,759</span> cfs · 14 Sep 2025</div>
+        </div>
       </div>
-      <div style="text-align:right;font-size:7.5px;color:rgba(100,150,195,.5);line-height:1.8">
-        <div>Peak 1 · <span style="color:#ff9800">543,184</span> cfs · 24 Aug 2025</div>
-        <div>Peak 2 · <span style="color:#ef5350">635,759</span> cfs · 14 Sep 2025</div>
-      </div>
+      <canvas id="chartCanvas"></canvas>
     </div>
-    <canvas id="chartCanvas"></canvas>
-  </div>
-  <div id="stage-strip">
-    <div id="st-title">Flood Stage — Sindh Barrages</div>
-    <div class="srow" id="st-n"><span class="sl">Normal</span><div class="sbw"><div class="sbi" style="background:#43a047"></div></div><span class="sv">&lt;200k</span></div>
-    <div class="srow" id="st-l"><span class="sl">Low Flood</span><div class="sbw"><div class="sbi" style="background:#8bc34a"></div></div><span class="sv">200–350k</span></div>
-    <div class="srow" id="st-m"><span class="sl">Medium</span><div class="sbw"><div class="sbi" style="background:#ffc107"></div></div><span class="sv">350–500k</span></div>
-    <div class="srow" id="st-h"><span class="sl">High Flood</span><div class="sbw"><div class="sbi" style="background:#ff9800"></div></div><span class="sv">500–700k</span></div>
-    <div class="srow" id="st-v"><span class="sl">Very High</span><div class="sbw"><div class="sbi" style="background:#f44336"></div></div><span class="sv">700–900k</span></div>
-    <div class="srow" id="st-s"><span class="sl">Super Flood</span><div class="sbw"><div class="sbi" style="background:#7b1fa2"></div></div><span class="sv">&gt;900k</span></div>
+    <div id="stage-strip">
+      <div id="st-title">Flood Stage — Sindh Barrages</div>
+      <div class="srow" id="st-n"><span class="sl">Normal</span><div class="sbw"><div class="sbi" style="background:#43a047"></div></div><span class="sv">&lt;200k</span></div>
+      <div class="srow" id="st-l"><span class="sl">Low Flood</span><div class="sbw"><div class="sbi" style="background:#8bc34a"></div></div><span class="sv">200–350k</span></div>
+      <div class="srow" id="st-m"><span class="sl">Medium</span><div class="sbw"><div class="sbi" style="background:#ffc107"></div></div><span class="sv">350–500k</span></div>
+      <div class="srow" id="st-h"><span class="sl">High Flood</span><div class="sbw"><div class="sbi" style="background:#ff9800"></div></div><span class="sv">500–700k</span></div>
+      <div class="srow" id="st-v"><span class="sl">Very High</span><div class="sbw"><div class="sbi" style="background:#f44336"></div></div><span class="sv">700–900k</span></div>
+      <div class="srow" id="st-s"><span class="sl">Super Flood</span><div class="sbw"><div class="sbi" style="background:#7b1fa2"></div></div><span class="sv">&gt;900k</span></div>
+    </div>
   </div>
 </div>
 
@@ -895,9 +885,20 @@ const PHASES=[
 let phI=0,phEl=0,lastTs=0,bGlow=false,alShown=false,curC=90000;
 // ─── IMPACT STATE ─────────────────────────────────────────────────────────
 let distStatus={da:'ok',ja:'ok',qa:'ok',la:'ok',ka:'ok'};
-let impDisp={pop:0,hse:0,crp:0,pkr:0};
-let cardsShown=new Set();
+let calloutQueue=[];
+let activeCallout=null;      // {id, startTs}
+let stripIdx=0;
+let stripLastTs=0;
+let stripLastKey='';
 let breachShown=false;
+// District geographic centroids for map-anchored callouts
+const DIST_CENTROIDS={
+  da:[67.50,26.55],
+  ja:[67.95,25.75],
+  qa:[67.50,27.45],
+  la:[68.35,27.52],
+  ka:[67.15,25.00]
+};
 
 function enterPhase(i){
   phI=i%PHASES.length;phEl=0;
@@ -908,12 +909,11 @@ function enterPhase(i){
     bGlow=false;alShown=false;document.getElementById('alert').style.opacity=0;
     rPts=[];cPts=[];
     // Reset impact state for new cycle
-    impDisp={pop:0,hse:0,crp:0,pkr:0};
-    cardsShown=new Set();
+    calloutQueue=[];activeCallout=null;stripIdx=0;stripLastTs=0;stripLastKey='';
     breachShown=false;
     const bb=document.getElementById('breach-badge');if(bb)bb.classList.remove('vis');
-    const ip=document.getElementById('impact-panel');if(ip)ip.classList.remove('vis');
-    const dc=document.getElementById('dist-cards');if(dc)dc.innerHTML='';
+    const strip=document.getElementById('impact-strip');
+    if(strip){strip.classList.remove('vis');strip.innerHTML='';}
     updDistByNais();
   }
 }
@@ -1622,8 +1622,8 @@ function updDistByNais(){
     const dot=document.getElementById('dd-'+id),st=document.getElementById('ds-'+id);
     if(dot)dot.style.background=c.d;
     if(st){st.style.background=c.sb;st.style.color=c.sc;st.textContent=c.sl;}
-    // Show district card on first critical transition
-    if(mode==='critical'&&prev[id]!=='critical')showDistCard(id);
+    // Queue map callout on first critical transition
+    if(mode==='critical'&&prev[id]!=='critical')queueCallout(id);
   }
   updateImpactMapLayers();
 }
@@ -1641,54 +1641,111 @@ function fmtBig(n){
   return Math.round(n).toString();
 }
 
-function showDistCard(id){
-  if(cardsShown.has(id))return;
-  cardsShown.add(id);
-  const dd=DIST_DATA[id];if(!dd)return;
-  const box=document.getElementById('dist-cards');if(!box)return;
-  const el=document.createElement('div');
-  el.className='dc';
-  el.innerHTML=`<div class="dc-head"><span class="dc-icon">🌊</span><span class="dc-title">${dd.name.toUpperCase()} — CRITICAL</span></div>`
-    +`<div class="dc-body">${dd.desc}</div>`
-    +`<div class="dc-stats">`
-    +`<span class="dc-stat">👥 ${fmtBig(dd.pop)} affected</span>`
-    +`<span class="dc-stat">🏠 ${fmtBig(dd.houses)} houses</span>`
-    +`<span class="dc-stat">🌾 ${fmtBig(dd.crops)} acres</span>`
-    +`<span class="dc-stat">💀 ${dd.deaths} deaths</span>`
-    +`</div>`;
-  box.appendChild(el);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
-  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),600);},9000);
+// ── Canvas rounded-rect helper ─────────────────────────────────────────────
+function rrect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
 }
 
-function updateImpact(ph,dt){
-  const panel=document.getElementById('impact-panel');if(!panel)return;
-  const active=ph==='SURGE'||ph==='PEAK';
-  const recess=ph==='RECESS';
-  if(!active&&!recess){
-    // Reset on DRY/CLOUDS/RAIN
-    if(ph==='DRY'){impDisp={pop:0,hse:0,crp:0,pkr:0};}
-    panel.classList.remove('vis');return;
+// ── Queue a district callout ───────────────────────────────────────────────
+function queueCallout(id){
+  if(!DIST_DATA[id])return;
+  if(calloutQueue.includes(id))return;
+  if(activeCallout&&activeCallout.id===id)return;
+  calloutQueue.push(id);
+}
+
+// ── Draw map-anchored district callout ────────────────────────────────────
+function drawDistCallouts(ts){
+  // Promote from queue when nothing active
+  if(!activeCallout&&calloutQueue.length>0){
+    activeCallout={id:calloutQueue.shift(),startTs:ts};
   }
-  // Compute targets from critical/risk districts
-  let tPop=0,tHse=0,tCrp=0,tPkr=0;
-  for(const[id,s]of Object.entries(distStatus)){
-    const dd=DIST_DATA[id];if(!dd)continue;
-    const f=s==='critical'?1.0:s==='risk'?0.28:0;
-    tPop+=dd.pop*f;tHse+=dd.houses*f;tCrp+=dd.crops*f;tPkr+=dd.lossB*f;
+  if(!activeCallout)return;
+  const FADE_IN=0.75,HOLD=3.8,FADE_OUT=0.65,TOTAL=FADE_IN+HOLD+FADE_OUT;
+  const elapsed=(ts-activeCallout.startTs)/1000;
+  if(elapsed>=TOTAL){activeCallout=null;return;}
+  const alpha=elapsed<FADE_IN?elapsed/FADE_IN:
+              elapsed<FADE_IN+HOLD?1:
+              1-(elapsed-FADE_IN-HOLD)/FADE_OUT;
+  const dd=DIST_DATA[activeCallout.id];
+  const cen=DIST_CENTROIDS[activeCallout.id];
+  if(!dd||!cen)return;
+  try{
+    const[sx,sy]=map.project(cen);
+    const W=168,H=54,r=7;
+    const bx=sx-W/2, by=sy-H-20;
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    // Background
+    ctx.fillStyle='rgba(72,4,4,.93)';
+    rrect(bx,by,W,H,r);ctx.fill();
+    // Border
+    ctx.strokeStyle='rgba(239,83,80,.72)';ctx.lineWidth=1.3;
+    rrect(bx,by,W,H,r);ctx.stroke();
+    // Top accent bar
+    ctx.fillStyle='rgba(239,83,80,.55)';
+    rrect(bx,by,W,8,r);ctx.fill();
+    // Connector line
+    ctx.beginPath();ctx.moveTo(sx,by+H);ctx.lineTo(sx,sy-5);
+    ctx.strokeStyle='rgba(239,83,80,.45)';ctx.lineWidth=1;ctx.stroke();
+    // Dot on centroid
+    ctx.beginPath();ctx.arc(sx,sy,4.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(239,83,80,.95)';ctx.fill();
+    ctx.beginPath();ctx.arc(sx,sy,8,0,Math.PI*2);
+    ctx.fillStyle='rgba(239,83,80,.18)';ctx.fill();
+    // District name
+    ctx.font='800 10px Segoe UI,Arial,sans-serif';
+    ctx.textAlign='center';ctx.shadowBlur=0;
+    ctx.fillStyle='#fff';
+    ctx.fillText(dd.name.toUpperCase(),sx,by+21);
+    // CRITICAL tag
+    ctx.font='700 7.5px Segoe UI,Arial,sans-serif';
+    ctx.fillStyle='rgba(255,110,100,.9)';
+    ctx.fillText('▲ CRITICAL',sx,by+33);
+    // Headline figure
+    ctx.font='700 11px Segoe UI,Arial,sans-serif';
+    ctx.fillStyle='rgba(255,205,185,.92)';
+    ctx.fillText(fmtBig(dd.pop)+' people affected',sx,by+48);
+    ctx.restore();
+  }catch(e){}
+}
+
+// ── Cycling impact strip in bottom panel ──────────────────────────────────
+function updateImpactStrip(ts){
+  const strip=document.getElementById('impact-strip');if(!strip)return;
+  const active=Object.entries(distStatus).filter(([,s])=>s==='critical'||s==='risk');
+  if(active.length===0){strip.classList.remove('vis');stripLastKey='';return;}
+  strip.classList.add('vis');
+  // Cycle every 4 s
+  if(ts-stripLastTs>4000){
+    stripIdx=(stripIdx+1)%active.length;
+    stripLastTs=ts;
   }
-  // Ramp: fast surge, steady peak, slow recess
-  const ramp=ph==='SURGE'?0.07:ph==='PEAK'?0.025:0.004;
-  impDisp.pop=Math.min(impDisp.pop+tPop*ramp*dt,tPop);
-  impDisp.hse=Math.min(impDisp.hse+tHse*ramp*dt,tHse);
-  impDisp.crp=Math.min(impDisp.crp+tCrp*ramp*dt,tCrp);
-  impDisp.pkr=Math.min(impDisp.pkr+tPkr*ramp*dt,tPkr);
-  if(impDisp.pop<500&&!active){panel.classList.remove('vis');return;}
-  panel.classList.add('vis');
-  const vp=document.getElementById('iv-pop');if(vp)vp.textContent=fmtBig(impDisp.pop);
-  const vh=document.getElementById('iv-hse');if(vh)vh.textContent=fmtBig(impDisp.hse);
-  const vc=document.getElementById('iv-crp');if(vc)vc.textContent=fmtBig(impDisp.crp);
-  const vk=document.getElementById('iv-pkr');if(vk)vk.textContent='PKR '+impDisp.pkr.toFixed(1)+'B';
+  const ci=stripIdx%active.length;
+  const key=ci+':'+active.map(([id])=>id).join(',');
+  if(key===stripLastKey)return;  // nothing changed — skip DOM write
+  stripLastKey=key;
+  const[id,s]=active[ci];
+  const dd=DIST_DATA[id];if(!dd)return;
+  strip.innerHTML=
+    `<div class="is-badge">${s==='critical'?'⚠&nbsp;CRITICAL':'⚡&nbsp;RISK'}</div>`
+    +`<div class="is-content">`
+    +`<span class="is-name">${dd.name}</span>`
+    +`<span class="is-sep">·</span>`
+    +`<span class="is-stat">${fmtBig(dd.pop)}&nbsp;affected</span>`
+    +`<span class="is-sep">·</span>`
+    +`<span class="is-stat">${fmtBig(dd.crops)}&nbsp;acres flooded</span>`
+    +`<span class="is-sep">·</span>`
+    +`<span class="is-stat">PKR&nbsp;${dd.lossB}B&nbsp;loss</span>`
+    +`<span class="is-sep">·</span>`
+    +`<span class="is-stat">${dd.deaths}&nbsp;deaths</span>`
+    +`</div>`
+    +`<div class="is-dots">${active.map((_,i)=>`<div class="is-dot${i===ci?' act':''}"></div>`).join('')}</div>`;
 }
 
 function drawBreachMarker(ts){
@@ -1781,10 +1838,11 @@ function drawCanvas(ts){
   for(const n of NAIS){try{drawNai(n,ts);}catch(e){/* skip Nai if projection throws (horizon edge case) */}}
   drawLakes(ts);drawLabels();
   drawBreachMarker(ts);
+  drawDistCallouts(ts);
   const mp=Math.round(WB.manchar.fill*100),hp=Math.round(WB.hamal.fill*100),gp=Math.round(WB.gajdam.fill*100),dp=Math.round(WB.darawai.fill*100);
   [['m',mp],['h',hp],['g',gp],['d',dp]].forEach(([k,v])=>{const gl=document.getElementById('gl-'+k),gf=document.getElementById('gf-'+k);if(gl)gl.textContent=v+'%';if(gf)gf.style.width=v+'%';});
   updLegGlow(aN,bGlow);
-  updateImpact(ph.id,dt);
+  updateImpactStrip(ts);
   /* Audio update */
   if(window.updateAudio){
     const avgFill=(WB.manchar.fill+WB.hamal.fill+WB.gajdam.fill+WB.darawai.fill)/4;
@@ -2506,24 +2564,6 @@ map.on('load',()=>{
   if(mapEl)mapEl.addEventListener('pointerdown',closeAll);
 })();
 </script>
-
-<!-- ── Impact counter panel ───────────────────────────────────────────────── -->
-<div id="impact-panel">
-  <div class="imp-hdr">
-    ⚠ FLOOD IMPACT — 2022 EVENT SCALE ESTIMATE
-    <span>PDNA 2022 · PDMA Sindh · World Bank · NDMA</span>
-  </div>
-  <div class="imp-grid">
-    <div class="imp-cell"><div class="imp-val" id="iv-pop">0</div><div class="imp-key">People Affected</div></div>
-    <div class="imp-cell"><div class="imp-val" id="iv-hse">0</div><div class="imp-key">Houses Damaged</div></div>
-    <div class="imp-cell"><div class="imp-val" id="iv-crp">0</div><div class="imp-key">Acres Flooded</div></div>
-    <div class="imp-cell"><div class="imp-val" id="iv-pkr">PKR 0B</div><div class="imp-key">Financial Loss</div></div>
-  </div>
-  <div class="imp-src">Pakistan Post-Disaster Needs Assessment 2022 (WB/ADB/UN/GOP) · PDMA Sindh Situation Reports · NDMA Daily Sitreps</div>
-</div>
-
-<!-- ── District impact cards (slide-in) ──────────────────────────────────── -->
-<div id="dist-cards"></div>
 
 <!-- ── Bund breach badge ──────────────────────────────────────────────────── -->
 <div id="breach-badge">⚠ FP BUND BREACH DETECTED<br><span style="font-size:10px;font-weight:400;letter-spacing:1px">Floodwater crossing into protected zone</span></div>
