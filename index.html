@@ -824,15 +824,45 @@ function enterPhase(i){
 }
 
 // ─── ATMOSPHERE ──────────────────────────────────────────────────────────
-let rPts=[];
+// Rain system: 3 depth layers (near/mid/far) + wind gusts for natural feel
+let rPts=[], windPhase=0, windGust=0;
 function spawnRain(i){
-  for(let k=0;k<Math.floor(i*5);k++)
-    rPts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight*.82,vy:360+Math.random()*190,vx:48+Math.random()*26,len:12+Math.random()*20,a:.2+Math.random()*.38});
-  rPts=rPts.filter(r=>r.y<innerHeight).slice(-430);
+  const n=Math.floor(i*4);
+  for(let k=0;k<n;k++){
+    const r=Math.random();
+    // z layer: 0=near(25%), 1=mid(55%), 2=far(20%) — drawn back→front
+    const z=r<0.25?0:r<0.80?1:2;
+    const vy=z===0?480+Math.random()*220:z===1?270+Math.random()*160:120+Math.random()*90;
+    const bvx=z===0?54+Math.random()*28:z===1?40+Math.random()*20:26+Math.random()*14;
+    const len=z===0?24+Math.random()*18:z===1?11+Math.random()*10:5+Math.random()*6;
+    const lw=z===0?1.3+Math.random()*0.55:z===1?0.75+Math.random()*0.3:0.44;
+    const a=z===0?0.38+Math.random()*0.24:z===1?0.17+Math.random()*0.16:0.06+Math.random()*0.09;
+    // Quick-fill first frame; thereafter spawn from above screen
+    const y=rPts.length<160?Math.random()*innerHeight*0.9:-len-Math.random()*100;
+    rPts.push({x:Math.random()*(innerWidth+60)-20,y,vy,bvx,vx:bvx,len,lw,a,z});
+  }
+  // Sort far→near so near drops render on top; cap at 600
+  rPts=rPts.filter(r=>r.y<innerHeight+30).sort((a,b)=>b.z-a.z).slice(-600);
 }
 function drawAtmos(dt,rI,dark){
   if(dark>0){ctx.fillStyle=`rgba(0,5,25,${dark*.18})`;ctx.fillRect(0,0,cv.width,cv.height);}
-  ctx.save();for(const r of rPts){r.x+=r.vx*dt;r.y+=r.vy*dt;ctx.beginPath();ctx.moveTo(r.x,r.y);ctx.lineTo(r.x-r.vx/r.vy*r.len,r.y-r.len);ctx.strokeStyle=`rgba(148,210,255,${r.a*rI})`;ctx.lineWidth=.85;ctx.stroke();}ctx.restore();
+  // Rain-mist veil: light atmospheric haze grows with intensity
+  if(rI>0.45){ctx.fillStyle=`rgba(140,180,225,${(rI-0.45)*0.055})`;ctx.fillRect(0,0,cv.width,cv.height);}
+  // Wind gusts: sum of 3 sinusoids → organic, non-repeating drift
+  windPhase+=dt;
+  windGust=Math.sin(windPhase*0.28)*18+Math.sin(windPhase*0.71)*11+Math.sin(windPhase*2.03)*5;
+  ctx.save();
+  for(const r of rPts){
+    // Near drops feel the gust most; far drops are barely affected
+    const gf=r.z===0?1.0:r.z===1?0.62:0.28;
+    r.vx=r.bvx+windGust*gf;
+    r.x+=r.vx*dt; r.y+=r.vy*dt;
+    // Colour: near=bright azure, mid=blue-white, far=muted grey-blue
+    const col=r.z===0?`rgba(190,228,255,${r.a*rI})`:r.z===1?`rgba(148,205,255,${r.a*rI})`:`rgba(108,162,215,${r.a*rI})`;
+    ctx.beginPath();ctx.moveTo(r.x,r.y);ctx.lineTo(r.x-r.vx/r.vy*r.len,r.y-r.len);
+    ctx.strokeStyle=col;ctx.lineWidth=r.lw;ctx.stroke();
+  }
+  ctx.restore();
 }
 
 // ─── HELPER: progressive points ──────────────────────────────────────────
