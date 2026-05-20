@@ -334,6 +334,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
 .is-dots{display:flex;gap:4px;margin-left:12px;flex-shrink:0;}
 .is-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18);transition:background .3s;}
 .is-dot.act{background:rgba(239,83,80,.9);}
+.is-src{font-size:7.5px;color:rgba(255,160,140,.45);letter-spacing:1px;white-space:nowrap;margin-left:14px;flex-shrink:0;}
 
 /* ── Bund breach badge ───────────────────────────────────────────────────── */
 #breach-badge{
@@ -1677,7 +1678,7 @@ function drawDistCallouts(ts){
   if(!dd||!cen)return;
   try{
     const[sx,sy]=map.project(cen);
-    const W=168,H=54,r=7;
+    const W=178,H=66,r=7;
     const bx=sx-W/2, by=sy-H-20;
     ctx.save();
     ctx.globalAlpha=alpha;
@@ -1710,7 +1711,11 @@ function drawDistCallouts(ts){
     // Headline figure
     ctx.font='700 11px Segoe UI,Arial,sans-serif';
     ctx.fillStyle='rgba(255,205,185,.92)';
-    ctx.fillText(fmtBig(dd.pop)+' people affected',sx,by+48);
+    ctx.fillText(fmtBig(dd.pop)+' people affected',sx,by+47);
+    // Date / source reference
+    ctx.font='400 7px Segoe UI,Arial,sans-serif';
+    ctx.fillStyle='rgba(255,160,130,.50)';
+    ctx.fillText('Aug–Sep 2022 Monsoon  ·  PDNA 2022',sx,by+60);
     ctx.restore();
   }catch(e){}
 }
@@ -1737,7 +1742,7 @@ function updateImpactStrip(ts){
     +`<div class="is-content">`
     +`<span class="is-name">${dd.name}</span>`
     +`<span class="is-sep">·</span>`
-    +`<span class="is-stat">${fmtBig(dd.pop)}&nbsp;affected</span>`
+    +`<span class="is-stat">${fmtBig(dd.pop)}&nbsp;people affected</span>`
     +`<span class="is-sep">·</span>`
     +`<span class="is-stat">${fmtBig(dd.crops)}&nbsp;acres flooded</span>`
     +`<span class="is-sep">·</span>`
@@ -1745,6 +1750,7 @@ function updateImpactStrip(ts){
     +`<span class="is-sep">·</span>`
     +`<span class="is-stat">${dd.deaths}&nbsp;deaths</span>`
     +`</div>`
+    +`<span class="is-src">AUG–SEP 2022 · PDNA 2022</span>`
     +`<div class="is-dots">${active.map((_,i)=>`<div class="is-dot${i===ci?' act':''}"></div>`).join('')}</div>`;
 }
 
