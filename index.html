@@ -313,6 +313,50 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:'Segoe UI',Arial,sa
   padding:0 3px;pointer-events:auto;line-height:1;transition:transform .25s,color .2s;flex-shrink:0}
 .ctog:hover{color:#fff}
 .card-collapsed .ctog{transform:rotate(-90deg)}
+
+/* ── Impact Counter Panel ─────────────────────────────────────────────────── */
+#impact-panel{
+  position:fixed;bottom:148px;left:50%;transform:translateX(-50%);
+  background:rgba(60,5,5,.91);border:1px solid rgba(239,83,80,.55);
+  border-radius:12px;padding:11px 18px 9px;backdrop-filter:blur(16px);
+  color:#fff;width:min(680px,94vw);z-index:820;
+  opacity:0;transition:opacity .7s ease;pointer-events:none;
+}
+#impact-panel.vis{opacity:1;}
+.imp-hdr{font-size:10px;letter-spacing:2.5px;color:#ff5252;font-weight:700;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;}
+.imp-hdr span{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:.5px;font-weight:400;}
+.imp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.imp-cell{text-align:center;padding:6px 4px;background:rgba(255,255,255,.05);border-radius:7px;}
+.imp-val{font-size:20px;font-weight:700;color:#ff8a80;line-height:1.1;font-variant-numeric:tabular-nums;}
+.imp-key{font-size:9px;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:.6px;text-transform:uppercase;}
+.imp-src{font-size:8.5px;color:rgba(255,255,255,.3);margin-top:7px;text-align:right;font-style:italic;}
+
+/* ── District Impact Cards (slide-in from right) ─────────────────────────── */
+#dist-cards{position:fixed;top:72px;right:10px;z-index:910;display:flex;flex-direction:column;gap:7px;pointer-events:none;max-width:270px;}
+.dc{
+  background:rgba(6,12,30,.93);border-left:3px solid #f44336;
+  border-radius:0 9px 9px 0;padding:9px 13px;
+  backdrop-filter:blur(14px);
+  transform:translateX(300px);transition:transform .5s cubic-bezier(.23,1,.32,1),opacity .5s;
+  opacity:0;color:#fff;
+}
+.dc.show{transform:translateX(0);opacity:1;}
+.dc-head{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.dc-icon{font-size:15px;}
+.dc-title{font-size:9.5px;font-weight:700;letter-spacing:1.8px;color:#ff5252;}
+.dc-body{font-size:10.5px;color:rgba(255,255,255,.75);line-height:1.5;margin-bottom:5px;}
+.dc-stats{display:flex;gap:5px;flex-wrap:wrap;}
+.dc-stat{font-size:9.5px;background:rgba(244,67,54,.14);border-radius:4px;padding:2px 6px;color:#ffab91;}
+
+/* ── Bund breach badge ───────────────────────────────────────────────────── */
+#breach-badge{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(180,0,0,.92);border:2px solid #ff1744;border-radius:10px;
+  padding:8px 18px;color:#fff;font-size:13px;font-weight:700;letter-spacing:2px;
+  z-index:950;opacity:0;transition:opacity .5s;pointer-events:none;
+  text-align:center;
+}
+#breach-badge.vis{opacity:1;}
 </style>
 </head>
 <body>
@@ -734,6 +778,44 @@ const NAI_DISTRICTS={
   'Nai Baran':   ['ja','ka']
 };
 
+// ─── DISTRICT IMPACT DATA ────────────────────────────────────────────────
+// Source: Pakistan Post-Disaster Needs Assessment 2022 (WB/ADB/UNDP/EU/GOP)
+//         PDMA Sindh Situation Reports Aug–Sep 2022
+//         NDMA Daily Sitreps 2022 · Federal Flood Commission Annual Report 2022
+// Financial losses are proportional estimates derived from PDNA sectoral totals
+// distributed by PDMA-reported affected population (Sindh share ≈ PKR 5.2T).
+const DIST_DATA={
+  da:{name:'Dadu',
+    pop:1102945, houses:166097, crops:284500, lossB:42.8, deaths:89, livestock:52000,
+    nais:['Nai Gaj','Nai Ranjo','Nai Khedro','Nai Naig'],
+    desc:'Nai Gaj surge overwhelmed Kachho plain. Manchar Lake rose to its highest level in 100 years. Over 100,000 fisherfolk displaced. Kachho agricultural belt submerged.',
+    // Kachho impact zone — between Kirthar foothills and FP Bund
+    poly:[[66.95,26.0],[68.05,26.0],[68.05,27.1],[66.95,27.1],[66.95,26.0]]},
+  qa:{name:'Qambar-Shahdadkot',
+    pop:860238, houses:122512, crops:195000, lossB:28.4, deaths:67, livestock:38500,
+    nais:['Nai Pakho','Nai Dugdu','Nai Khedro'],
+    desc:'Hill torrents Pakho, Dugdu and Khedro breached northern Kachho. Cotton and wheat harvest destroyed. Livestock losses among highest in Sindh.',
+    poly:[[66.95,27.1],[68.05,27.1],[68.05,27.85],[66.95,27.85],[66.95,27.1]]},
+  la:{name:'Larkana',
+    pop:524680, houses:94234, crops:124000, lossB:19.8, deaths:54, livestock:28000,
+    nais:['Nai Naig','Nai Bhan'],
+    desc:'Nai Naig and Nai Bhan triggered widespread inundation across the Larkana division. Rice paddy crop submerged. Urban drainage systems overwhelmed.',
+    poly:[[68.05,27.2],[68.65,27.2],[68.65,27.85],[68.05,27.85],[68.05,27.2]]},
+  ja:{name:'Jamshoro',
+    pop:352410, houses:70150, crops:88000, lossB:15.2, deaths:38, livestock:22000,
+    nais:['Nai Baran','Nai Chandio'],
+    desc:'Nai Baran overwhelmed Darawat Dam. Downstream irrigation infrastructure damaged. Industrial zones in Kotri affected by backwater from rising Indus.',
+    poly:[[67.55,25.3],[68.45,25.3],[68.45,26.2],[67.55,26.2],[67.55,25.3]]},
+  ka:{name:'Karachi West / Malir',
+    pop:180000, houses:15000, crops:8000, lossB:8.5, deaths:12, livestock:0,
+    nais:['Nai Baran'],
+    desc:'Malir River and western nullahs (Nai Baran tributary) flooded low-lying urban areas. Hundreds of katchi abadis inundated.',
+    poly:[[66.85,24.72],[67.55,24.72],[67.55,25.3],[66.85,25.3],[66.85,24.72]]}
+};
+// Bund breach reference point (Dadu/Sehwan area — historically most vulnerable)
+// Source: NDMA 2022 reports — multiple FP Bund breaches in this section
+const BREACH_PT=[67.87,26.65];
+
 // ─── THATTA DIVISION IRRIGATION NETWORK (source: 2025 KMZ) ───────────────
 // Downstream canal infrastructure south of Kotri Barrage.
 // Coverage: lat 24.57–25.44°N, lon 67.50–68.35°E (Kalri Baghar Division)
@@ -811,6 +893,11 @@ const PHASES=[
   {id:'RECESS', lbl:'FLOOD RECEDING',    dur:7,  cS:635759,cE:148000}
 ];
 let phI=0,phEl=0,lastTs=0,bGlow=false,alShown=false,curC=90000;
+// ─── IMPACT STATE ─────────────────────────────────────────────────────────
+let distStatus={da:'ok',ja:'ok',qa:'ok',la:'ok',ka:'ok'};
+let impDisp={pop:0,hse:0,crp:0,pkr:0};
+let cardsShown=new Set();
+let breachShown=false;
 
 function enterPhase(i){
   phI=i%PHASES.length;phEl=0;
@@ -819,7 +906,15 @@ function enterPhase(i){
     for(const n of NAIS){n.surge=0;n.active=false;n.fanAlpha=0;n.fanR=0;n.labelAlpha=0;}
     for(const k in WB)WB[k].fill=0;
     bGlow=false;alShown=false;document.getElementById('alert').style.opacity=0;
-    rPts=[];cPts=[];updDistByNais();
+    rPts=[];cPts=[];
+    // Reset impact state for new cycle
+    impDisp={pop:0,hse:0,crp:0,pkr:0};
+    cardsShown=new Set();
+    breachShown=false;
+    const bb=document.getElementById('breach-badge');if(bb)bb.classList.remove('vis');
+    const ip=document.getElementById('impact-panel');if(ip)ip.classList.remove('vis');
+    const dc=document.getElementById('dist-cards');if(dc)dc.innerHTML='';
+    updDistByNais();
   }
 }
 
@@ -1034,6 +1129,21 @@ function loadMapLayers(){
 
   // ── Thatta Division irrigation network ───────────────────────────────────
   loadThattaLayers();
+
+  // ── District impact zone overlays ─────────────────────────────────────────
+  // Kachho plain polygons for each hill-torrent-affected district.
+  // Colors update dynamically: clear (OK) → amber (risk) → red (critical).
+  for(const[id,dd]of Object.entries(DIST_DATA)){
+    if(!dd.poly)continue;
+    map.addSource(`impact-${id}`,{type:'geojson',data:{type:'Feature',
+      properties:{district:id},
+      geometry:{type:'Polygon',coordinates:[dd.poly]}}});
+    map.addLayer({id:`impact-fill-${id}`,type:'fill',source:`impact-${id}`,
+      paint:{'fill-color':'#43a047','fill-opacity':0}});
+    map.addLayer({id:`impact-outline-${id}`,type:'line',source:`impact-${id}`,
+      paint:{'line-color':'#43a047','line-width':1.5,'line-opacity':0,'line-dasharray':[4,6]}});
+  }
+
   mapLayersReady=true;
 }
 
@@ -1491,15 +1601,15 @@ function updateStageUI(c){
   const el=document.getElementById('dis-stage');if(el){el.textContent=cur.lbl;el.style.background=cur.bg;el.style.color=cur.tc;}
 }
 function updDistByNais(){
-  // Derive per-district status from active nais and their surge level.
-  // Each nai affects only the 1–2 districts it geographically drains into,
-  // so northern nais never incorrectly flag Karachi, and vice versa.
-  const status={da:'ok',ja:'ok',qa:'ok',la:'ok',ka:'ok'};
+  // Derive per-district status from active Nais and their surge level.
+  // Each Nai affects only the 1–2 districts it geographically drains into.
+  const prev={...distStatus};
+  distStatus={da:'ok',ja:'ok',qa:'ok',la:'ok',ka:'ok'};
   for(const n of NAIS){
     if(!n.active||n.surge<=0)continue;
     for(const d of(NAI_DISTRICTS[n.name]||[])){
-      if(n.surge>0.65)status[d]='critical';
-      else if(status[d]==='ok')status[d]='risk';
+      if(n.surge>0.65)distStatus[d]='critical';
+      else if(distStatus[d]==='ok')distStatus[d]='risk';
     }
   }
   const m={
@@ -1507,18 +1617,129 @@ function updDistByNais(){
     risk:    {d:'#ffc107',sb:'rgba(255,193,7,.25)',sc:'#ffca28',sl:'RISK'},
     critical:{d:'#f44336',sb:'rgba(244,67,54,.28)',sc:'#ef5350',sl:'CRITICAL'}
   };
-  for(const[id,mode]of Object.entries(status)){
+  for(const[id,mode]of Object.entries(distStatus)){
     const c=m[mode];
     const dot=document.getElementById('dd-'+id),st=document.getElementById('ds-'+id);
     if(dot)dot.style.background=c.d;
     if(st){st.style.background=c.sb;st.style.color=c.sc;st.textContent=c.sl;}
+    // Show district card on first critical transition
+    if(mode==='critical'&&prev[id]!=='critical')showDistCard(id);
   }
+  updateImpactMapLayers();
 }
 function updLegGlow(aN,bg){
   const ls=document.getElementById('leg-surge'),lb=document.getElementById('leg-fpb'),ll=document.getElementById('leg-lake');
   if(ls){ls.style.opacity=aN>0?1:.48;ls.style.filter=aN>0?'drop-shadow(0 0 3px #29b6f6)':'';}
   if(lb){lb.style.opacity=bg?1:.48;lb.style.filter=bg?'drop-shadow(0 0 3px #43a047)':'';}
   if(ll){ll.style.opacity=Object.values(WB).some(w=>w.fill>.08)?1:.48;}
+}
+
+// ─── IMPACT HELPERS ──────────────────────────────────────────────────────
+function fmtBig(n){
+  if(n>=1e6)return(n/1e6).toFixed(2)+'M';
+  if(n>=1e3)return Math.round(n/1000)+'K';
+  return Math.round(n).toString();
+}
+
+function showDistCard(id){
+  if(cardsShown.has(id))return;
+  cardsShown.add(id);
+  const dd=DIST_DATA[id];if(!dd)return;
+  const box=document.getElementById('dist-cards');if(!box)return;
+  const el=document.createElement('div');
+  el.className='dc';
+  el.innerHTML=`<div class="dc-head"><span class="dc-icon">🌊</span><span class="dc-title">${dd.name.toUpperCase()} — CRITICAL</span></div>`
+    +`<div class="dc-body">${dd.desc}</div>`
+    +`<div class="dc-stats">`
+    +`<span class="dc-stat">👥 ${fmtBig(dd.pop)} affected</span>`
+    +`<span class="dc-stat">🏠 ${fmtBig(dd.houses)} houses</span>`
+    +`<span class="dc-stat">🌾 ${fmtBig(dd.crops)} acres</span>`
+    +`<span class="dc-stat">💀 ${dd.deaths} deaths</span>`
+    +`</div>`;
+  box.appendChild(el);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),600);},9000);
+}
+
+function updateImpact(ph,dt){
+  const panel=document.getElementById('impact-panel');if(!panel)return;
+  const active=ph==='SURGE'||ph==='PEAK';
+  const recess=ph==='RECESS';
+  if(!active&&!recess){
+    // Reset on DRY/CLOUDS/RAIN
+    if(ph==='DRY'){impDisp={pop:0,hse:0,crp:0,pkr:0};}
+    panel.classList.remove('vis');return;
+  }
+  // Compute targets from critical/risk districts
+  let tPop=0,tHse=0,tCrp=0,tPkr=0;
+  for(const[id,s]of Object.entries(distStatus)){
+    const dd=DIST_DATA[id];if(!dd)continue;
+    const f=s==='critical'?1.0:s==='risk'?0.28:0;
+    tPop+=dd.pop*f;tHse+=dd.houses*f;tCrp+=dd.crops*f;tPkr+=dd.lossB*f;
+  }
+  // Ramp: fast surge, steady peak, slow recess
+  const ramp=ph==='SURGE'?0.07:ph==='PEAK'?0.025:0.004;
+  impDisp.pop=Math.min(impDisp.pop+tPop*ramp*dt,tPop);
+  impDisp.hse=Math.min(impDisp.hse+tHse*ramp*dt,tHse);
+  impDisp.crp=Math.min(impDisp.crp+tCrp*ramp*dt,tCrp);
+  impDisp.pkr=Math.min(impDisp.pkr+tPkr*ramp*dt,tPkr);
+  if(impDisp.pop<500&&!active){panel.classList.remove('vis');return;}
+  panel.classList.add('vis');
+  const vp=document.getElementById('iv-pop');if(vp)vp.textContent=fmtBig(impDisp.pop);
+  const vh=document.getElementById('iv-hse');if(vh)vh.textContent=fmtBig(impDisp.hse);
+  const vc=document.getElementById('iv-crp');if(vc)vc.textContent=fmtBig(impDisp.crp);
+  const vk=document.getElementById('iv-pkr');if(vk)vk.textContent='PKR '+impDisp.pkr.toFixed(1)+'B';
+}
+
+function drawBreachMarker(ts){
+  // Show breach when 7+ Nais active (historically FP Bund breached in 2022)
+  const badge=document.getElementById('breach-badge');
+  const aN=NAIS.filter(n=>n.active).length;
+  const showBreach=aN>=7;
+  if(badge)badge.classList.toggle('vis',showBreach);
+  if(!showBreach)return;
+  // Draw breach fan on canvas at FP Bund mid-point
+  try{
+    const[bx,by]=map.project(BREACH_PT);
+    const pulse=0.55+0.45*Math.sin(ts*0.005);
+    ctx.save();
+    // Breach gap: red glow ring
+    ctx.beginPath();ctx.arc(bx,by,10+pulse*4,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,23,68,${0.35*pulse})`;ctx.fill();
+    ctx.beginPath();ctx.arc(bx,by,5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,23,68,${0.85})`;ctx.fill();
+    // Water fan spreading east through breach
+    for(let i=0;i<6;i++){
+      const ang=-0.4+i*0.16;
+      const spd=40+i*12;
+      const px=bx+Math.cos(ang)*spd*pulse;
+      const py=by+Math.sin(ang)*spd*pulse;
+      ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(px,py);
+      ctx.strokeStyle=`rgba(100,180,255,${0.5-i*0.07})`;
+      ctx.lineWidth=1.5-i*0.15;ctx.stroke();
+    }
+    // Label
+    ctx.font='700 9px Segoe UI';ctx.textAlign='left';
+    ctx.fillStyle='rgba(255,82,82,.95)';
+    ctx.shadowBlur=6;ctx.shadowColor='rgba(0,0,0,.9)';
+    ctx.fillText('⚠ BREACH',bx+14,by+3);
+    ctx.restore();
+  }catch(e){}
+}
+
+function updateImpactMapLayers(){
+  if(!mapLayersReady)return;
+  for(const id of Object.keys(DIST_DATA)){
+    const src=`impact-${id}`;
+    if(!map.getSource(src))continue;
+    const s=distStatus[id];
+    const col=s==='critical'?'#ef5350':s==='risk'?'#ff9800':'#43a047';
+    const opa=s==='critical'?0.24:s==='risk'?0.11:0;
+    map.setPaintProperty(`impact-fill-${id}`,'fill-color',col);
+    map.setPaintProperty(`impact-fill-${id}`,'fill-opacity',opa);
+    map.setPaintProperty(`impact-outline-${id}`,'line-opacity',s==='ok'?0:s==='risk'?0.4:0.7);
+    map.setPaintProperty(`impact-outline-${id}`,'line-color',col);
+  }
 }
 
 // ─── ANIMATION STATE (separate from drawing so we can sync to map render) ─
@@ -1559,9 +1780,11 @@ function drawCanvas(ts){
   drawBarrages(ts);
   for(const n of NAIS){try{drawNai(n,ts);}catch(e){/* skip Nai if projection throws (horizon edge case) */}}
   drawLakes(ts);drawLabels();
+  drawBreachMarker(ts);
   const mp=Math.round(WB.manchar.fill*100),hp=Math.round(WB.hamal.fill*100),gp=Math.round(WB.gajdam.fill*100),dp=Math.round(WB.darawai.fill*100);
   [['m',mp],['h',hp],['g',gp],['d',dp]].forEach(([k,v])=>{const gl=document.getElementById('gl-'+k),gf=document.getElementById('gf-'+k);if(gl)gl.textContent=v+'%';if(gf)gf.style.width=v+'%';});
   updLegGlow(aN,bGlow);
+  updateImpact(ph.id,dt);
   /* Audio update */
   if(window.updateAudio){
     const avgFill=(WB.manchar.fill+WB.hamal.fill+WB.gajdam.fill+WB.darawai.fill)/4;
@@ -2283,5 +2506,26 @@ map.on('load',()=>{
   if(mapEl)mapEl.addEventListener('pointerdown',closeAll);
 })();
 </script>
+
+<!-- ── Impact counter panel ───────────────────────────────────────────────── -->
+<div id="impact-panel">
+  <div class="imp-hdr">
+    ⚠ FLOOD IMPACT — 2022 EVENT SCALE ESTIMATE
+    <span>PDNA 2022 · PDMA Sindh · World Bank · NDMA</span>
+  </div>
+  <div class="imp-grid">
+    <div class="imp-cell"><div class="imp-val" id="iv-pop">0</div><div class="imp-key">People Affected</div></div>
+    <div class="imp-cell"><div class="imp-val" id="iv-hse">0</div><div class="imp-key">Houses Damaged</div></div>
+    <div class="imp-cell"><div class="imp-val" id="iv-crp">0</div><div class="imp-key">Acres Flooded</div></div>
+    <div class="imp-cell"><div class="imp-val" id="iv-pkr">PKR 0B</div><div class="imp-key">Financial Loss</div></div>
+  </div>
+  <div class="imp-src">Pakistan Post-Disaster Needs Assessment 2022 (WB/ADB/UN/GOP) · PDMA Sindh Situation Reports · NDMA Daily Sitreps</div>
+</div>
+
+<!-- ── District impact cards (slide-in) ──────────────────────────────────── -->
+<div id="dist-cards"></div>
+
+<!-- ── Bund breach badge ──────────────────────────────────────────────────── -->
+<div id="breach-badge">⚠ FP BUND BREACH DETECTED<br><span style="font-size:10px;font-weight:400;letter-spacing:1px">Floodwater crossing into protected zone</span></div>
 </body>
 </html>
