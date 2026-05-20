@@ -2072,10 +2072,11 @@ map.on('load',()=>{
   if(!AC)return;
 
   let ctx=null,master=null,
-      rainGain=null,riverGain=null,torrentGain=null,
-      thunderSched=0,enabled=false,booted=false;
+      rainGain=null,riverGain=null,torrentGain=null,windGain=null,
+      thunderSched=0,enabled=false,booted=false,
+      lastPh='',alertPlayed=false;
 
-  /* ── Build noise layer AFTER context is confirmed running ──────── */
+  /* ── Looping bandpass noise — one layer per sound type ─────────── */
   function mkNoise(dur,lo,hi,q){
     const sr=ctx.sampleRate,buf=ctx.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
     for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
@@ -2084,121 +2085,168 @@ map.on('load',()=>{
     const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=hi*1.5;
     const g=ctx.createGain();g.gain.value=0;
     src.connect(bp);bp.connect(lp);lp.connect(g);g.connect(master);
-    src.start(0);
-    return g;
+    src.start(0);return g;
   }
 
   function buildGraph(){
-    rainGain    = mkNoise(3,1200,8000,0.4);
-    riverGain   = mkNoise(4,60,400,0.6);
-    torrentGain = mkNoise(2,300,2200,0.55);
+    rainGain    = mkNoise(3,1200,8000,0.4);   // high hiss: rainfall on terrain
+    riverGain   = mkNoise(4,60,350,0.6);       // deep rumble: river / lake body
+    torrentGain = mkNoise(2,300,2200,0.55);    // mid roar: hill torrent surge
+    windGain    = mkNoise(5,80,700,0.28);      // low-mid whoosh: monsoon wind
     const drip  = mkNoise(1,800,3000,2.2);
-    drip.gain.value=0.012;            // always-on subtle drip
-    riverGain.gain.value=0.04;        // always-on river ambient
+    drip.gain.value=0.010;                     // always-on: subtle water drip
+    riverGain.gain.value=0.022;               // always-on: quiet background river
   }
 
-  /* ── Boot: create context + resume (iOS-safe) ─────────────────── */
+  /* ── Boot (iOS-safe) ───────────────────────────────────────────── */
   function boot(){
     return new Promise(function(resolve){
       if(booted){resolve();return;}
       booted=true;
       ctx=new AC();
       master=ctx.createGain();master.gain.value=0.72;master.connect(ctx.destination);
-      /* iOS Safari: context starts suspended — must resume in gesture */
       function go(){buildGraph();resolve();}
-      if(ctx.state==='running'){go();}
-      else{ctx.resume().then(go).catch(go);}
+      if(ctx.state==='running'){go();}else{ctx.resume().then(go).catch(go);}
     });
   }
 
-  /* ── Thunder: one-shot low-freq burst ─────────────────────────── */
+  /* ── Thunder: lightning crack → low rumble ─────────────────────── */
   function playThunder(){
     if(!ctx||!enabled||ctx.state!=='running')return;
+    const now=ctx.currentTime;
+    // Sharp crack (lightning): 70ms high-freq burst
+    const cs=ctx.sampleRate,cbd=ctx.createBuffer(1,cs*0.07,cs),cc=cbd.getChannelData(0);
+    for(let i=0;i<cc.length;i++)cc[i]=(Math.random()*2-1)*Math.exp(-i/cs*90);
+    const csrc=ctx.createBufferSource();csrc.buffer=cbd;
+    const chp=ctx.createBiquadFilter();chp.type='highpass';chp.frequency.value=1800;
+    const cg=ctx.createGain();cg.gain.value=0.11;
+    csrc.connect(chp);chp.connect(cg);cg.connect(master);csrc.start();
+    // Rolling rumble: 2.8s low-freq decay follows 40ms later
     const sr=ctx.sampleRate,dur=2.8,buf=ctx.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
     for(let i=0;i<d.length;i++){
       const t=i/sr,env=Math.exp(-t*2.2)*(1+0.4*Math.sin(t*18+Math.random()*6));
       d[i]=(Math.random()*2-1)*env;
     }
     const src=ctx.createBufferSource();src.buffer=buf;
-    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=300;
-    const g=ctx.createGain();g.gain.value=0.5;
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=280;
+    const g=ctx.createGain();g.gain.value=0.46;
+    src.connect(lp);lp.connect(g);g.connect(master);src.start(now+0.04);
+  }
+
+  /* ── Surge onset: deep bass thump at flash-flood start ─────────── */
+  function playSurgeOnset(){
+    if(!ctx||!enabled||ctx.state!=='running')return;
+    const sr=ctx.sampleRate,dur=1.8,buf=ctx.createBuffer(1,sr*dur,sr),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){const t=i/sr;d[i]=(Math.random()*2-1)*Math.exp(-t*2.8);}
+    const src=ctx.createBufferSource();src.buffer=buf;
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=105;
+    const g=ctx.createGain();g.gain.value=0.36;
     src.connect(lp);lp.connect(g);g.connect(master);src.start();
   }
 
-  /* ── Alert: triple beep ───────────────────────────────────────── */
-  let alertPlayed=false;
+  /* ── Alert: triple pulse (660 Hz — less harsh than 880) ─────────── */
   function playAlert(){
     if(!ctx||!enabled||alertPlayed||ctx.state!=='running')return;
     alertPlayed=true;
     [0,0.38,0.76].forEach(function(delay){
       const osc=ctx.createOscillator(),g=ctx.createGain();
-      osc.type='sine';osc.frequency.value=880;
+      osc.type='sine';osc.frequency.value=660;
       g.gain.setValueAtTime(0,ctx.currentTime+delay);
-      g.gain.linearRampToValueAtTime(0.18,ctx.currentTime+delay+0.04);
+      g.gain.linearRampToValueAtTime(0.15,ctx.currentTime+delay+0.04);
       g.gain.linearRampToValueAtTime(0,ctx.currentTime+delay+0.22);
       osc.connect(g);g.connect(master);
       osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+delay+0.26);
     });
   }
 
-  /* ── Per-frame update ─────────────────────────────────────────── */
+  /* ── Per-frame update: gains + timing track phase exactly ───────── */
   window.updateAudio=function(ph,pf,activeNais,waterFill){
     if(!ctx||!enabled||ctx.state!=='running')return;
     const now=ctx.currentTime;
-    const storm=['RAIN','SURGE','PEAK'].includes(ph);
-    const surge=ph==='SURGE'||ph==='PEAK';
-    const recess=ph==='RECESS';
+    const nFrac=Math.min(activeNais/9,1);
 
-    rainGain.gain.setTargetAtTime(
-      ph==='RAIN'?pf*0.055:storm?0.055:recess?0.018:0, now,1.2);
-
-    const nFrac=Math.min(activeNais/8,1);
-    torrentGain.gain.setTargetAtTime(
-      surge?(0.04+nFrac*0.18):recess?nFrac*0.06:0, now,2.5);
-
-    riverGain.gain.setTargetAtTime(0.04+waterFill*0.08, now,3);
-
-    if(storm&&now>thunderSched){
-      const gap=8+Math.random()*18;thunderSched=now+gap;
-      setTimeout(playThunder,gap*1000);
+    // One-shot events on phase transition
+    if(ph!==lastPh){
+      if(ph==='SURGE')playSurgeOnset();
+      lastPh=ph;
     }
-    if(surge&&activeNais>=3)playAlert();
-    if(!surge)alertPlayed=false;
+
+    // Time constants: fast on rain build-up, urgent on surge, slow on recess
+    const tcR =ph==='RAIN'?0.9:ph==='SURGE'?1.8:ph==='RECESS'?4.5:2.5;
+    const tcT =ph==='SURGE'?1.2:ph==='PEAK'?2.0:3.5;
+    const tcW =2.0, tcRv=3.0;
+
+    // Rain: silence → light build (CLOUDS) → ramp (RAIN) → full (SURGE/PEAK) → fade (RECESS)
+    const rT=ph==='CLOUDS'?pf*0.016
+             :ph==='RAIN'?pf*0.068
+             :(ph==='SURGE'||ph==='PEAK')?0.065
+             :ph==='RECESS'?Math.max(0,0.022*(1-pf*1.1))
+             :0;
+    rainGain.gain.setTargetAtTime(rT,now,tcR);
+
+    // Torrent: zero until SURGE, scales with active Nais, lingers in RECESS
+    const tT=(ph==='SURGE'||ph==='PEAK')?(0.038+nFrac*0.22)
+             :ph==='RECESS'?nFrac*0.08
+             :0;
+    torrentGain.gain.setTargetAtTime(tT,now,tcT);
+
+    // Wind: whisper in DRY, builds through CLOUDS, gusts with Nais in SURGE
+    const wT=ph==='DRY'?0.006
+             :ph==='CLOUDS'?pf*0.036
+             :ph==='RAIN'?0.030+pf*0.018
+             :ph==='SURGE'?0.034+nFrac*0.024
+             :ph==='PEAK'?0.048
+             :ph==='RECESS'?Math.max(0,0.014*(1-pf*0.8))
+             :0;
+    windGain.gain.setTargetAtTime(wT,now,tcW);
+
+    // River/lakes: baseline + tracks water fill — stays loud after peak
+    const rvT=ph==='DRY'?0.022
+              :ph==='CLOUDS'?0.025
+              :ph==='RAIN'?0.028+waterFill*0.04
+              :(ph==='SURGE'||ph==='PEAK')?(0.048+waterFill*0.14)
+              :ph==='RECESS'?(0.042+waterFill*0.11)
+              :0.022;
+    riverGain.gain.setTargetAtTime(rvT,now,tcRv);
+
+    // Thunder: appears in CLOUDS, peaks in SURGE, rare in RECESS
+    const isStormy=['CLOUDS','RAIN','SURGE','PEAK','RECESS'].includes(ph);
+    if(isStormy&&now>thunderSched){
+      const minG=ph==='SURGE'?6:ph==='PEAK'?9:ph==='RAIN'?12:ph==='RECESS'?22:20;
+      const maxG=ph==='SURGE'?14:ph==='PEAK'?20:ph==='RAIN'?25:ph==='RECESS'?40:36;
+      if(ph!=='RECESS'||pf<0.5){  // thunder stops mid-recession
+        const gap=minG+Math.random()*(maxG-minG);
+        thunderSched=now+gap;
+        setTimeout(playThunder,gap*1000);
+      }
+    }
+
+    // Flash flood alert once per surge cycle
+    if((ph==='SURGE'||ph==='PEAK')&&activeNais>=3)playAlert();
+    if(ph!=='SURGE'&&ph!=='PEAK')alertPlayed=false;
   };
 
-  /* ── Button: tap to enable (required by iOS) ──────────────────── */
+  /* ── Button (iOS requires user gesture to boot) ─────────────────── */
   const btn=document.getElementById('snd-btn');
   if(!btn)return;
-
-  function setUI(){
-    btn.textContent=enabled?'🔊':'🔇';
-    btn.classList.toggle('muted',!enabled);
-  }
+  function setUI(){btn.textContent=enabled?'🔊':'🔇';btn.classList.toggle('muted',!enabled);}
 
   btn.addEventListener('click',function(){
     boot().then(function(){
-      /* After boot, context must still be explicitly resumed on some iOS builds */
-      if(ctx.state==='suspended'){
-        ctx.resume().then(toggle);
-      } else {
-        toggle();
-      }
+      if(ctx.state==='suspended'){ctx.resume().then(toggle);}else{toggle();}
     });
   });
 
   function toggle(){
-    enabled=!enabled;
-    setUI();
+    enabled=!enabled;setUI();
     if(!enabled){
-      [rainGain,riverGain,torrentGain].forEach(function(g){
+      [rainGain,riverGain,torrentGain,windGain].forEach(function(g){
         if(g)g.gain.setTargetAtTime(0,ctx.currentTime,0.3);
       });
-      /* Restore always-on drip & river after a moment */
       setTimeout(function(){if(!enabled&&riverGain)riverGain.gain.setTargetAtTime(0,ctx.currentTime,0.1);},400);
     }
   }
 
-  /* ── iOS background-tab resume: re-unlock on next visible tap ─── */
   document.addEventListener('visibilitychange',function(){
     if(!document.hidden&&ctx&&ctx.state==='suspended'&&enabled)ctx.resume();
   });
